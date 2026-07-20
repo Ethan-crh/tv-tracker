@@ -22,8 +22,11 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mon Tracker",
+  title: "Couzan-desu",
   description: "Suis ta progression dans tes films, séries et animes.",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({
