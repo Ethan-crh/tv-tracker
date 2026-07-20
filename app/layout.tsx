@@ -22,7 +22,7 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Couzan-desu",
+  title: "Mon Tracker",
   description: "Suis ta progression dans tes films, séries et animes.",
 };
 
@@ -37,7 +37,7 @@ export default function RootLayout({
         className={`${display.variable} ${body.variable} ${mono.variable} antialiased`}
       >
         <Navbar />
-        {children}
+        <div className="pb-16 sm:pb-0">{children}</div>
       </body>
     </html>
   );
