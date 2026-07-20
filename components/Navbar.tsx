@@ -23,7 +23,7 @@ export default function Navbar() {
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user ?? null);
-      }
+      },
     );
 
     return () => listener.subscription.unsubscribe();
@@ -48,16 +48,16 @@ export default function Navbar() {
       {/* Barre du haut : logo + compte, visible partout */}
       <nav className="halftone-bg sticky top-0 z-50 border-b-4 border-[#111111]">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2 sm:px-6 sm:py-2.5">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 sm:gap-4">
             <Image
               src="/logo.png"
               alt="Mon Tracker"
               width={38}
               height={38}
-              className="manga-panel rounded-sm"
+              className="rounded-sm border-4 border-[#111111]"
             />
             <span className="hidden font-display text-lg uppercase tracking-tight text-[#111111] sm:inline">
-              Mon Tracker
+              My TV-Board
             </span>
           </Link>
 
