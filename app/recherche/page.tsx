@@ -53,7 +53,7 @@ export default function RecherchePage() {
 
   function toggleGenre(id: number) {
     setSelectedGenres((prev) =>
-      prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id],
     );
   }
 
@@ -99,7 +99,7 @@ export default function RecherchePage() {
     debounceRef.current = setTimeout(async () => {
       try {
         const res = await fetch(
-          `/api/search?query=${encodeURIComponent(query)}`
+          `/api/search?query=${encodeURIComponent(query)}`,
         );
         const data = await res.json();
         if (res.ok) {
@@ -157,32 +157,40 @@ export default function RecherchePage() {
   }
 
   return (
-    <main className="min-h-screen p-8 max-w-5xl mx-auto">
+    <main className="min-h-screen p-4 max-w-5xl mx-auto sm:p-8">
+      {" "}
       <h1 className="font-display text-3xl uppercase mb-6">
         Rechercher un titre
       </h1>
-
       <div ref={wrapperRef} className="relative mb-4">
-        <form onSubmit={handleSearch} className="flex gap-2">
+        <form
+          onSubmit={handleSearch}
+          className="flex flex-col gap-2 sm:flex-row"
+        >
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
             placeholder="Ex: Naruto, Breaking Bad, jjk..."
-            className="flex-1 border-3 border-[#111111] rounded-md px-4 py-2"
+            className="w-full border-3 border-[#111111] rounded-md px-3 py-2 text-sm sm:flex-1 sm:px-4 sm:text-base"
             autoComplete="off"
           />
-          <button type="submit" className="manga-btn bg-[#E1263F] px-6 py-2 text-white">
-            Rechercher
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilterOpen((v) => !v)}
-            className="manga-btn bg-white px-4 py-2 text-[#111111]"
-          >
-            Filtres
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              className="manga-btn flex-1 bg-[#E1263F] px-4 py-2 text-xs text-white sm:flex-none sm:px-6 sm:text-sm"
+            >
+              Rechercher
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterOpen((v) => !v)}
+              className="manga-btn flex-1 bg-white px-4 py-2 text-xs text-[#111111] sm:flex-none sm:px-4 sm:text-sm"
+            >
+              Filtres
+            </button>
+          </div>
         </form>
 
         {showSuggestions && suggestions.length > 0 && (
@@ -225,7 +233,6 @@ export default function RecherchePage() {
           </div>
         )}
       </div>
-
       {filterOpen && (
         <div className="manga-panel bg-white p-5 mb-8">
           <div className="mb-4">
@@ -302,11 +309,9 @@ export default function RecherchePage() {
           </button>
         </div>
       )}
-
       {loading && <p>Chargement...</p>}
       {error && <p className="text-red-600">{error}</p>}
       {filterLoading && <p>Chargement des résultats filtrés...</p>}
-
       {hasSearched && !loading && results.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 mb-10">
           {results.map((item) => {
@@ -317,7 +322,9 @@ export default function RecherchePage() {
               <Link
                 key={item.id}
                 href={
-                  item.media_type === "tv" ? `/serie/${item.id}` : `/film/${item.id}`
+                  item.media_type === "tv"
+                    ? `/serie/${item.id}`
+                    : `/film/${item.id}`
                 }
                 className="relative flex flex-col hover:opacity-80 transition"
               >
@@ -349,7 +356,6 @@ export default function RecherchePage() {
           })}
         </div>
       )}
-
       {filterApplied && !filterLoading && (
         <div className="mb-10">
           <div className="flex items-center justify-between mb-4">
@@ -373,7 +379,9 @@ export default function RecherchePage() {
               <Link
                 key={`${item.media_type}-${item.id}`}
                 href={
-                  item.media_type === "tv" ? `/serie/${item.id}` : `/film/${item.id}`
+                  item.media_type === "tv"
+                    ? `/serie/${item.id}`
+                    : `/film/${item.id}`
                 }
                 className="relative flex flex-col hover:opacity-80 transition"
               >
@@ -404,7 +412,6 @@ export default function RecherchePage() {
           </div>
         </div>
       )}
-
       {!hasSearched && !filterApplied && (
         <>
           <TopRow title="Top Films du moment" category="films" />
