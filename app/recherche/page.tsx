@@ -407,9 +407,9 @@ export default function RecherchePage() {
 
       {!hasSearched && !filterApplied && (
         <>
-          <TopRow title="Top 20 Films" category="films" />
-          <TopRow title="Top 30 Animes" category="animes" />
-          <TopRow title="Top 20 Séries" category="series" />
+          <TopRow title="Top Films du moment" category="films" />
+          <TopRow title="Top Anime du moment" category="animes" />
+          <TopRow title="Top Séries du moment" category="series" />
         </>
       )}
     </main>

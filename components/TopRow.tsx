@@ -51,7 +51,7 @@ export default function TopRow({
         <button
           onClick={() => scroll("left")}
           aria-label="Défiler vers la gauche"
-          className="manga-btn absolute left-0 top-1/2 z-20 -translate-y-1/2 -translate-x-3 bg-white px-2 py-3 text-[#111111]"
+          className="manga-btn absolute left-0 top-1/2 z-20 hidden -translate-y-1/2 -translate-x-3 bg-white px-2 py-3 text-[#111111] sm:block"
         >
           ‹
         </button>
@@ -92,7 +92,7 @@ export default function TopRow({
         <button
           onClick={() => scroll("right")}
           aria-label="Défiler vers la droite"
-          className="manga-btn absolute right-0 top-1/2 z-20 -translate-y-1/2 translate-x-3 bg-white px-2 py-3 text-[#111111]"
+          className="manga-btn absolute right-0 top-1/2 z-20 hidden -translate-y-1/2 translate-x-3 bg-white px-2 py-3 text-[#111111] sm:block"
         >
           ›
         </button>

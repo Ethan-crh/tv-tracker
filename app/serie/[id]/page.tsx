@@ -78,10 +78,12 @@ export default function SerieDetailPage({
       setLoadingShow(false);
 
       const firstRealSeason = data.seasons?.find(
-        (s: Season) => s.season_number > 0
+        (s: Season) => s.season_number > 0,
       );
       setActiveSeason(
-        firstRealSeason ? firstRealSeason.season_number : data.seasons?.[0]?.season_number
+        firstRealSeason
+          ? firstRealSeason.season_number
+          : data.seasons?.[0]?.season_number,
       );
     }
     fetchShow();
@@ -110,7 +112,7 @@ export default function SerieDetailPage({
 
       if (watchedData) {
         const set = new Set(
-          watchedData.map((w) => `${w.season_number}-${w.episode_number}`)
+          watchedData.map((w) => `${w.season_number}-${w.episode_number}`),
         );
         setWatchedSet(set);
       }
@@ -145,7 +147,7 @@ export default function SerieDetailPage({
         media_type: "tv",
         status: newStatus,
       },
-      { onConflict: "user_id,tmdb_id,media_type" }
+      { onConflict: "user_id,tmdb_id,media_type" },
     );
   }
 
@@ -183,7 +185,7 @@ export default function SerieDetailPage({
         });
       }
     },
-    [user, tmdbId, watchedSet, supabase]
+    [user, tmdbId, watchedSet, supabase],
   );
 
   if (loadingShow) return <p className="p-8">Chargement...</p>;
@@ -191,18 +193,18 @@ export default function SerieDetailPage({
 
   return (
     <main className="max-w-5xl mx-auto p-8">
-      <div className="flex gap-6 mb-6">
+      <div className="flex flex-col gap-6 mb-6 sm:flex-row">
         {show.poster_path && (
           <Image
             src={`https://image.tmdb.org/t/p/w342${show.poster_path}`}
             alt={show.name}
             width={200}
             height={300}
-            className="rounded-lg"
+            className="mx-auto rounded-lg sm:mx-0"
           />
         )}
         <div>
-          <h1 className="text-3xl font-bold mb-2">{show.name}</h1>
+          <h1 className="text-2xl font-bold mb-2 sm:text-3xl">{show.name}</h1>
           <p className="text-gray-600 mb-4">{show.overview}</p>
 
           {user ? (

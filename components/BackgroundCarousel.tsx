@@ -39,7 +39,7 @@ export default function BackgroundCarousel() {
       {backdrops.map((path, i) => (
         <div
           key={path}
-          className="absolute inset-0 bg-cover bg-center transition-opacity duration-[1500ms] ease-in-out"
+          className="absolute inset-0 bg-cover bg-[center_25%] transition-opacity duration-[1500ms] ease-in-out sm:bg-center"
           style={{
             backgroundImage: `url(https://image.tmdb.org/t/p/original${path})`,
             opacity: i === index ? 1 : 0,

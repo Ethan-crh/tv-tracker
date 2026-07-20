@@ -12,26 +12,26 @@ export default async function Home() {
     <main className="relative min-h-screen overflow-hidden">
       <BackgroundCarousel />
 
-      <div className="relative mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center gap-8 px-8 text-center">
-        <div className="speed-burst pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2" />
+      <div className="relative mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center gap-6 px-4 py-12 text-center sm:gap-8 sm:px-8">
+        <div className="speed-burst pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 sm:h-[560px] sm:w-[560px]" />
 
-        <span className="manga-panel inline-block rotate-[-2deg] bg-[#FFD400] px-3 py-1 font-mono-utility text-xs font-bold uppercase tracking-widest text-[#111111]">
+        <span className="manga-panel inline-block rotate-[-2deg] bg-[#FFD400] px-2.5 py-1 font-mono-utility text-[10px] font-bold uppercase tracking-widest text-[#111111] sm:px-3 sm:text-xs">
           話1 · Premier épisode
         </span>
 
-        <h1 className="manga-panel rotate-[-1deg] bg-[#F7F5F0] px-10 py-6 font-display text-5xl uppercase leading-none tracking-tight text-[#111111] sm:text-6xl">
-          Couzan-desu
+        <h1 className="manga-panel rotate-[-1deg] bg-[#F7F5F0] px-5 py-4 font-display text-3xl uppercase leading-none tracking-tight text-[#111111] sm:px-10 sm:py-6 sm:text-6xl">
+          My Tv-Board
         </h1>
 
-        <p className="max-w-md text-[#3a3a3a]">
+        <p className="max-w-xs text-sm text-[#3a3a3a] sm:max-w-md sm:text-base">
           Films, séries, animes — coche chaque épisode et retrouve toujours
           où tu en es.
         </p>
 
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-4">
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
           <Link
             href="/recherche"
-            className="manga-btn bg-[#E1263F] px-7 py-3 text-sm font-bold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E1263F]"
+            className="manga-btn bg-[#E1263F] px-5 py-2.5 text-xs font-bold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E1263F] sm:px-7 sm:py-3 sm:text-sm"
           >
             Rechercher un titre
           </Link>
@@ -40,13 +40,13 @@ export default async function Home() {
             <>
               <Link
                 href="/mes-listes"
-                className="manga-btn bg-white px-7 py-3 text-sm font-bold text-[#111111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E1263F]"
+                className="manga-btn bg-white px-5 py-2.5 text-xs font-bold text-[#111111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E1263F] sm:px-7 sm:py-3 sm:text-sm"
               >
                 Mes listes
               </Link>
               <Link
                 href="/calendrier"
-                className="manga-btn bg-white px-7 py-3 text-sm font-bold text-[#111111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E1263F]"
+                className="manga-btn bg-white px-5 py-2.5 text-xs font-bold text-[#111111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E1263F] sm:px-7 sm:py-3 sm:text-sm"
               >
                 Calendrier
               </Link>
@@ -54,7 +54,7 @@ export default async function Home() {
           )}
         </div>
 
-        <div className="mt-4 font-mono-utility text-xs text-[#6B6B6B]">
+        <div className="mt-3 font-mono-utility text-xs text-[#6B6B6B] sm:mt-4">
           {user ? (
             <p>
               Connecté · <span className="text-[#111111]">{user.email}</span>
@@ -77,7 +77,9 @@ export default async function Home() {
           )}
         </div>
 
-        <p className="mt-6 font-display text-lg text-[#6B6B6B]">つづく…</p>
+        <p className="mt-4 font-display text-base text-[#6B6B6B] sm:mt-6 sm:text-lg">
+          つづく…
+        </p>
       </div>
     </main>
   );

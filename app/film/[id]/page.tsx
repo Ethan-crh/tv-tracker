@@ -85,7 +85,7 @@ export default function FilmDetailPage({
         media_type: "movie",
         status: newStatus,
       },
-      { onConflict: "user_id,tmdb_id,media_type" }
+      { onConflict: "user_id,tmdb_id,media_type" },
     );
   }
 
@@ -94,14 +94,14 @@ export default function FilmDetailPage({
 
   return (
     <main className="max-w-3xl mx-auto p-8">
-      <div className="flex gap-6">
+      <div className="flex flex-col gap-6 sm:flex-row">
         {movie.poster_path && (
           <Image
             src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
             alt={movie.title}
             width={220}
             height={330}
-            className="rounded-lg"
+            className="mx-auto rounded-lg sm:mx-0"
           />
         )}
         <div>
