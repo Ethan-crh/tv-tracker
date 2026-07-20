@@ -194,7 +194,8 @@ export default function RecherchePage() {
         </form>
 
         {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute z-10 mt-1 w-full bg-white border-2 border-[#111111] rounded-md shadow-lg overflow-hidden">
+          <div className="absolute z-50 mt-1 w-full bg-white border-2 border-[#111111] rounded-md shadow-lg overflow-hidden">
+            {" "}
             {suggestions.map((item) => {
               const title = item.title || item.name;
               const date = item.release_date || item.first_air_date;

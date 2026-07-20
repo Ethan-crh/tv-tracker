@@ -45,13 +45,9 @@ function isAnime(item: TMDBResult) {
   );
 }
 
-async function searchTMDB(
-  query: string,
-  apiKey: string,
-  topAnimeIds: Set<number>
-) {
+async function searchTMDB(query: string, apiKey: string) {
   const url = `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(
-    query
+    query,
   )}&api_key=${apiKey}&language=fr-FR&include_adult=false`;
 
   const response = await fetch(url);
@@ -61,19 +57,13 @@ async function searchTMDB(
 
   const filtered = (data.results || []).filter((item: TMDBResult) => {
     if (item.media_type !== "movie" && item.media_type !== "tv") return false;
-
     if (item.media_type === "tv" && BLOCKED_TV_IDS.has(item.id)) return false;
-
-    if (isAnime(item)) return topAnimeIds.has(item.id);
-
-    return true;
+    return true; // plus de restriction topAnimeIds
   });
 
-  // Trie par popularité décroissante : le titre le plus connu apparaît en premier,
-  // peu importe l'ordre de pertinence textuelle renvoyé par défaut par TMDB
   return filtered.sort(
     (a: { popularity?: number }, b: { popularity?: number }) =>
-      (b.popularity || 0) - (a.popularity || 0)
+      (b.popularity || 0) - (a.popularity || 0),
   );
 }
 
@@ -84,7 +74,7 @@ export async function GET(request: NextRequest) {
   if (!rawQuery) {
     return NextResponse.json(
       { error: "Le paramètre 'query' est requis." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -93,7 +83,7 @@ export async function GET(request: NextRequest) {
   if (!apiKey) {
     return NextResponse.json(
       { error: "Clé API TMDB manquante côté serveur." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -101,9 +91,7 @@ export async function GET(request: NextRequest) {
   const query = ALIASES[normalized] || rawQuery;
 
   try {
-    const topAnimeIds = await getTopAnimeIds(apiKey);
-
-    let results = await searchTMDB(query, apiKey, topAnimeIds);
+    let results = await searchTMDB(query, apiKey);
     let correctedTo: string | null = null;
 
     if (results.length === 0) {
@@ -117,7 +105,7 @@ export async function GET(request: NextRequest) {
 
       if (match) {
         correctedTo = match.item.title;
-        results = await searchTMDB(correctedTo, apiKey, topAnimeIds);
+        results = await searchTMDB(correctedTo, apiKey);
       }
     }
 
@@ -126,7 +114,7 @@ export async function GET(request: NextRequest) {
     console.error("Erreur TMDB:", error);
     return NextResponse.json(
       { error: "Erreur interne lors de la recherche." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

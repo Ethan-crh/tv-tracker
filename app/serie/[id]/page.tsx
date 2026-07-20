@@ -54,12 +54,12 @@ export default function SerieDetailPage({
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [loadingShow, setLoadingShow] = useState(true);
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<Status | null>(null);
   const [watchedSet, setWatchedSet] = useState<Set<string>>(new Set());
 
-  // Récupérer l'utilisateur connecté
   useEffect(() => {
     async function fetchUser() {
       const { data } = await supabase.auth.getUser();
@@ -68,7 +68,6 @@ export default function SerieDetailPage({
     fetchUser();
   }, [supabase]);
 
-  // Charger les infos de la série
   useEffect(() => {
     async function fetchShow() {
       setLoadingShow(true);
@@ -89,7 +88,6 @@ export default function SerieDetailPage({
     fetchShow();
   }, [id]);
 
-  // Charger le statut existant + les épisodes vus une fois l'user connu
   useEffect(() => {
     if (!user) return;
 
@@ -120,7 +118,6 @@ export default function SerieDetailPage({
     fetchUserData();
   }, [user, tmdbId, supabase]);
 
-  // Charger les épisodes de la saison active
   useEffect(() => {
     if (activeSeason === null) return;
 
@@ -134,7 +131,6 @@ export default function SerieDetailPage({
     fetchEpisodes();
   }, [id, activeSeason]);
 
-  // Changer le statut (ajoute à la liste ou met à jour)
   async function handleStatusChange(newStatus: Status) {
     if (!user) return;
 
@@ -151,24 +147,19 @@ export default function SerieDetailPage({
     );
   }
 
-  // Cocher/décocher un épisode
   const toggleEpisode = useCallback(
     async (seasonNumber: number, episodeNumber: number) => {
-      if (!user) return;
+      if (!user || !show) return;
 
       const key = `${seasonNumber}-${episodeNumber}`;
       const isWatched = watchedSet.has(key);
 
-      // Mise à jour optimiste de l'UI
-      const newSet = new Set(watchedSet);
       if (isWatched) {
+        // Décocher : on retire uniquement cet épisode (comportement simple existant)
+        const newSet = new Set(watchedSet);
         newSet.delete(key);
-      } else {
-        newSet.add(key);
-      }
-      setWatchedSet(newSet);
+        setWatchedSet(newSet);
 
-      if (isWatched) {
         await supabase
           .from("watched_episodes")
           .delete()
@@ -176,23 +167,101 @@ export default function SerieDetailPage({
           .eq("tmdb_id", tmdbId)
           .eq("season_number", seasonNumber)
           .eq("episode_number", episodeNumber);
-      } else {
-        await supabase.from("watched_episodes").insert({
+        return;
+      }
+
+      // Cocher : on construit la liste de TOUS les épisodes à marquer comme vus
+      // 1. toutes les saisons précédentes (entières)
+      // 2. la saison courante, du début jusqu'à l'épisode cliqué
+      const toMark: { season_number: number; episode_number: number }[] = [];
+
+      show.seasons
+        .filter((s) => s.season_number > 0 && s.episode_count > 0) // on ignore les "Spéciaux" (saison 0)
+        .forEach((s) => {
+          if (s.season_number < seasonNumber) {
+            for (let ep = 1; ep <= s.episode_count; ep++) {
+              const k = `${s.season_number}-${ep}`;
+              if (!watchedSet.has(k)) {
+                toMark.push({
+                  season_number: s.season_number,
+                  episode_number: ep,
+                });
+              }
+            }
+          } else if (s.season_number === seasonNumber) {
+            for (let ep = 1; ep <= episodeNumber; ep++) {
+              const k = `${s.season_number}-${ep}`;
+              if (!watchedSet.has(k)) {
+                toMark.push({
+                  season_number: s.season_number,
+                  episode_number: ep,
+                });
+              }
+            }
+          }
+        });
+
+      if (toMark.length === 0) return;
+
+      // Mise à jour optimiste de l'UI
+      const newSet = new Set(watchedSet);
+      toMark.forEach((e) =>
+        newSet.add(`${e.season_number}-${e.episode_number}`),
+      );
+      setWatchedSet(newSet);
+
+      // Insertion en masse (upsert pour éviter les doublons si conflit)
+      await supabase.from("watched_episodes").upsert(
+        toMark.map((e) => ({
           user_id: user.id,
           tmdb_id: tmdbId,
-          season_number: seasonNumber,
-          episode_number: episodeNumber,
-        });
-      }
+          season_number: e.season_number,
+          episode_number: e.episode_number,
+        })),
+        {
+          onConflict: "user_id,tmdb_id,season_number,episode_number",
+          ignoreDuplicates: true,
+        },
+      );
     },
-    [user, tmdbId, watchedSet, supabase],
+    [user, tmdbId, watchedSet, supabase, show],
   );
+
+  // Marque comme vue la saison ciblée ET toutes les saisons précédentes
+  async function markUpToSeasonWatched(targetSeason: number) {
+    if (!user || !show) return;
+
+    setBulkLoading(true);
+
+    const seasonsToMark = show.seasons.filter(
+      (s) => s.season_number > 0 && s.season_number <= targetSeason,
+    );
+
+    const rows = seasonsToMark.flatMap((s) =>
+      Array.from({ length: s.episode_count }, (_, i) => ({
+        user_id: user.id,
+        tmdb_id: tmdbId,
+        season_number: s.season_number,
+        episode_number: i + 1,
+      })),
+    );
+
+    const newSet = new Set(watchedSet);
+    rows.forEach((r) => newSet.add(`${r.season_number}-${r.episode_number}`));
+    setWatchedSet(newSet);
+
+    await supabase.from("watched_episodes").upsert(rows, {
+      onConflict: "user_id,tmdb_id,season_number,episode_number",
+    });
+
+    setBulkLoading(false);
+  }
 
   if (loadingShow) return <p className="p-8">Chargement...</p>;
   if (!show) return <p className="p-8">Série introuvable.</p>;
 
   return (
-    <main className="max-w-5xl mx-auto p-8">
+    <main className="max-w-5xl mx-auto p-4 sm:p-8">
       <div className="flex flex-col gap-6 mb-6 sm:flex-row">
         {show.poster_path && (
           <Image
@@ -231,7 +300,7 @@ export default function SerieDetailPage({
         </div>
       </div>
 
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
         {show.seasons
           .filter((s) => s.episode_count > 0)
           .map((season) => (
@@ -248,6 +317,18 @@ export default function SerieDetailPage({
             </button>
           ))}
       </div>
+
+      {user && activeSeason !== null && activeSeason > 0 && (
+        <button
+          onClick={() => markUpToSeasonWatched(activeSeason)}
+          disabled={bulkLoading}
+          className="mb-6 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition disabled:opacity-50"
+        >
+          {bulkLoading
+            ? "Enregistrement..."
+            : `✓ Tout marquer vu (jusqu'à la saison ${activeSeason})`}
+        </button>
+      )}
 
       {loadingEpisodes ? (
         <p>Chargement des épisodes...</p>
