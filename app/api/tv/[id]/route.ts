@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   const apiKey = process.env.TMDB_API_KEY;
@@ -10,19 +10,18 @@ export async function GET(
   if (!apiKey) {
     return NextResponse.json(
       { error: "Clé API TMDB manquante côté serveur." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
-  const url = `https://api.themoviedb.org/3/tv/${id}?api_key=${apiKey}&language=fr-FR`;
-
+  const url = `https://api.themoviedb.org/3/tv/${id}?api_key=${apiKey}&language=fr-FR&append_to_response=videos&include_video_language=fr,en`;
   try {
     const response = await fetch(url);
 
     if (!response.ok) {
       return NextResponse.json(
         { error: "Série introuvable." },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -30,9 +29,6 @@ export async function GET(
     return NextResponse.json(data);
   } catch (error) {
     console.error("Erreur TMDB:", error);
-    return NextResponse.json(
-      { error: "Erreur interne." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne." }, { status: 500 });
   }
 }

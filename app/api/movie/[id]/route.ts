@@ -14,8 +14,7 @@ export async function GET(
     );
   }
 
-  const url = `https://api.themoviedb.org/3/movie/${id}?api_key=${apiKey}&language=fr-FR`;
-
+const url = `https://api.themoviedb.org/3/movie/${id}?api_key=${apiKey}&language=fr-FR&append_to_response=videos&include_video_language=fr,en`;
   try {
     const response = await fetch(url);
 

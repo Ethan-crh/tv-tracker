@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import TrailerModal from "@/components/TrailerModal";
 
 type MovieDetails = {
   id: number;
@@ -12,6 +13,9 @@ type MovieDetails = {
   poster_path: string | null;
   release_date: string;
   runtime: number;
+  videos?: {
+    results: { key: string; site: string; type: string; iso_639_1?: string }[];
+  };
 };
 
 type Status = "a_voir" | "en_cours" | "termine" | "abandonne";
@@ -133,6 +137,9 @@ export default function FilmDetailPage({
               Connecte-toi pour suivre ce film.
             </p>
           )}
+          <div className="mt-3">
+            <TrailerModal videos={movie.videos?.results} />
+          </div>
         </div>
       </div>
     </main>

@@ -3,7 +3,9 @@
 import { useState, useEffect, use, useCallback } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { useConfirm } from "@/components/useConfirm";
 import type { User } from "@supabase/supabase-js";
+import TrailerModal from "@/components/TrailerModal";
 
 type Season = {
   id: number;
@@ -19,6 +21,9 @@ type ShowDetails = {
   overview: string;
   poster_path: string | null;
   seasons: Season[];
+  videos?: {
+    results: { key: string; site: string; type: string; iso_639_1?: string }[];
+  };
 };
 
 type Episode = {
@@ -40,6 +45,8 @@ const STATUS_LABELS: Record<Status, string> = {
   abandonne: "Abandonné",
 };
 
+const CHUNK_SIZE = 400;
+
 export default function SerieDetailPage({
   params,
 }: {
@@ -48,6 +55,7 @@ export default function SerieDetailPage({
   const { id } = use(params);
   const tmdbId = parseInt(id, 10);
   const supabase = createClient();
+  const { confirm, dialog } = useConfirm();
 
   const [show, setShow] = useState<ShowDetails | null>(null);
   const [activeSeason, setActiveSeason] = useState<number | null>(null);
@@ -55,6 +63,7 @@ export default function SerieDetailPage({
   const [loadingShow, setLoadingShow] = useState(true);
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkMessage, setBulkMessage] = useState<string | null>(null);
 
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<Status | null>(null);
@@ -88,11 +97,32 @@ export default function SerieDetailPage({
     fetchShow();
   }, [id]);
 
+  const refreshWatched = useCallback(async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("watched_episodes")
+      .select("season_number, episode_number")
+      .eq("user_id", user.id)
+      .eq("tmdb_id", tmdbId);
+
+    if (error) {
+      console.error("Erreur récupération épisodes vus:", error);
+      return;
+    }
+
+    setWatchedSet(
+      new Set(
+        (data || []).map((w) => `${w.season_number}-${w.episode_number}`),
+      ),
+    );
+  }, [user, tmdbId, supabase]);
+
   useEffect(() => {
     if (!user) return;
 
-    async function fetchUserData() {
-      const { data: showData } = await supabase
+    async function fetchStatus() {
+      const { data } = await supabase
         .from("user_shows")
         .select("status")
         .eq("user_id", user!.id)
@@ -100,35 +130,38 @@ export default function SerieDetailPage({
         .eq("media_type", "tv")
         .maybeSingle();
 
-      if (showData) setStatus(showData.status as Status);
-
-      const { data: watchedData } = await supabase
-        .from("watched_episodes")
-        .select("season_number, episode_number")
-        .eq("user_id", user!.id)
-        .eq("tmdb_id", tmdbId);
-
-      if (watchedData) {
-        const set = new Set(
-          watchedData.map((w) => `${w.season_number}-${w.episode_number}`),
-        );
-        setWatchedSet(set);
-      }
+      if (data) setStatus(data.status as Status);
     }
-    fetchUserData();
-  }, [user, tmdbId, supabase]);
+    fetchStatus();
+    refreshWatched();
+  }, [user, tmdbId, supabase, refreshWatched]);
 
   useEffect(() => {
     if (activeSeason === null) return;
 
+    const controller = new AbortController();
+
     async function fetchEpisodes() {
       setLoadingEpisodes(true);
-      const res = await fetch(`/api/tv/${id}/season/${activeSeason}`);
-      const data = await res.json();
-      setEpisodes(data.episodes || []);
-      setLoadingEpisodes(false);
+
+      try {
+        const res = await fetch(`/api/tv/${id}/season/${activeSeason}`, {
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        setEpisodes(data.episodes || []);
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        console.error("Erreur chargement épisodes:", err);
+        setEpisodes([]);
+      } finally {
+        if (!controller.signal.aborted) setLoadingEpisodes(false);
+      }
     }
+
     fetchEpisodes();
+
+    return () => controller.abort();
   }, [id, activeSeason]);
 
   async function handleStatusChange(newStatus: Status) {
@@ -147,113 +180,192 @@ export default function SerieDetailPage({
     );
   }
 
+  async function batchUpsert(
+    rows: {
+      user_id: string;
+      tmdb_id: number;
+      season_number: number;
+      episode_number: number;
+    }[],
+  ): Promise<boolean> {
+    const chunks: (typeof rows)[] = [];
+    for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+      chunks.push(rows.slice(i, i + CHUNK_SIZE));
+    }
+
+    let hasError = false;
+
+    await Promise.all(
+      chunks.map(async (chunk) => {
+        const { error } = await supabase
+          .from("watched_episodes")
+          .upsert(chunk, {
+            onConflict: "user_id,tmdb_id,season_number,episode_number",
+            ignoreDuplicates: true,
+          });
+        if (error) {
+          console.error("Erreur upsert par lot:", error);
+          hasError = true;
+        }
+      }),
+    );
+
+    return !hasError;
+  }
+
   const toggleEpisode = useCallback(
     async (seasonNumber: number, episodeNumber: number) => {
-      if (!user || !show) return;
+      if (!user) return;
 
       const key = `${seasonNumber}-${episodeNumber}`;
       const isWatched = watchedSet.has(key);
 
       if (isWatched) {
-        // Décocher : on retire uniquement cet épisode (comportement simple existant)
         const newSet = new Set(watchedSet);
         newSet.delete(key);
         setWatchedSet(newSet);
 
-        await supabase
+        const { error } = await supabase
           .from("watched_episodes")
           .delete()
           .eq("user_id", user.id)
           .eq("tmdb_id", tmdbId)
           .eq("season_number", seasonNumber)
           .eq("episode_number", episodeNumber);
+
+        if (error) {
+          console.error("Erreur suppression épisode:", error);
+          await refreshWatched();
+        }
         return;
       }
 
-      // Cocher : on construit la liste de TOUS les épisodes à marquer comme vus
-      // 1. toutes les saisons précédentes (entières)
-      // 2. la saison courante, du début jusqu'à l'épisode cliqué
-      const toMark: { season_number: number; episode_number: number }[] = [];
-
-      show.seasons
-        .filter((s) => s.season_number > 0 && s.episode_count > 0) // on ignore les "Spéciaux" (saison 0)
-        .forEach((s) => {
-          if (s.season_number < seasonNumber) {
-            for (let ep = 1; ep <= s.episode_count; ep++) {
-              const k = `${s.season_number}-${ep}`;
-              if (!watchedSet.has(k)) {
-                toMark.push({
-                  season_number: s.season_number,
-                  episode_number: ep,
-                });
-              }
-            }
-          } else if (s.season_number === seasonNumber) {
-            for (let ep = 1; ep <= episodeNumber; ep++) {
-              const k = `${s.season_number}-${ep}`;
-              if (!watchedSet.has(k)) {
-                toMark.push({
-                  season_number: s.season_number,
-                  episode_number: ep,
-                });
-              }
-            }
-          }
-        });
-
-      if (toMark.length === 0) return;
-
-      // Mise à jour optimiste de l'UI
-      const newSet = new Set(watchedSet);
-      toMark.forEach((e) =>
-        newSet.add(`${e.season_number}-${e.episode_number}`),
+      const episodesToMark = episodes.filter(
+        (ep) => ep.episode_number <= episodeNumber,
       );
+      if (episodesToMark.length === 0) return;
+
+      const confirmed = await confirm({
+        title: "Marquer comme vu",
+        message:
+          episodesToMark.length > 1
+            ? `Marquer comme vus les ${episodesToMark.length} épisodes jusqu'à celui-ci ?`
+            : `Marquer l'épisode ${episodeNumber} comme vu ?`,
+        confirmLabel: "Marquer vu",
+      });
+      if (!confirmed) return;
+
+      setBulkLoading(true);
+      setBulkMessage("Enregistrement en cours...");
+
+      const rows = episodesToMark.map((ep) => ({
+        user_id: user.id,
+        tmdb_id: tmdbId,
+        season_number: seasonNumber,
+        episode_number: ep.episode_number,
+      }));
+
+      const newSet = new Set(watchedSet);
+      rows.forEach((r) => newSet.add(`${r.season_number}-${r.episode_number}`));
       setWatchedSet(newSet);
 
-      // Insertion en masse (upsert pour éviter les doublons si conflit)
-      await supabase.from("watched_episodes").upsert(
-        toMark.map((e) => ({
-          user_id: user.id,
-          tmdb_id: tmdbId,
-          season_number: e.season_number,
-          episode_number: e.episode_number,
-        })),
-        {
-          onConflict: "user_id,tmdb_id,season_number,episode_number",
-          ignoreDuplicates: true,
-        },
-      );
+      const success = await batchUpsert(rows);
+      await refreshWatched();
+
+      setBulkMessage(success ? null : "⚠️ Une erreur est survenue, réessaie.");
+      setBulkLoading(false);
     },
-    [user, tmdbId, watchedSet, supabase, show],
+    [user, tmdbId, watchedSet, supabase, refreshWatched, episodes, confirm],
   );
 
-  // Marque comme vue la saison ciblée ET toutes les saisons précédentes
   async function markUpToSeasonWatched(targetSeason: number) {
     if (!user || !show) return;
 
-    setBulkLoading(true);
-
     const seasonsToMark = show.seasons.filter(
-      (s) => s.season_number > 0 && s.season_number <= targetSeason,
+      (s) =>
+        s.season_number > 0 &&
+        s.season_number <= targetSeason &&
+        s.episode_count > 0,
     );
 
-    const rows = seasonsToMark.flatMap((s) =>
-      Array.from({ length: s.episode_count }, (_, i) => ({
-        user_id: user.id,
-        tmdb_id: tmdbId,
-        season_number: s.season_number,
-        episode_number: i + 1,
-      })),
-    );
-
-    const newSet = new Set(watchedSet);
-    rows.forEach((r) => newSet.add(`${r.season_number}-${r.episode_number}`));
-    setWatchedSet(newSet);
-
-    await supabase.from("watched_episodes").upsert(rows, {
-      onConflict: "user_id,tmdb_id,season_number,episode_number",
+    const confirmed = await confirm({
+      title: "Tout marquer vu",
+      message: `Marquer comme vues toutes les saisons de 1 à ${targetSeason} ?`,
+      confirmLabel: "Tout marquer",
     });
+    if (!confirmed) return;
 
+    setBulkLoading(true);
+    setBulkMessage("Récupération des épisodes...");
+
+    try {
+      const seasonEpisodes = await Promise.all(
+        seasonsToMark.map(async (s) => {
+          const res = await fetch(`/api/tv/${id}/season/${s.season_number}`);
+          const data = await res.json();
+          return {
+            season_number: s.season_number,
+            episodes: (data.episodes || []) as Episode[],
+          };
+        }),
+      );
+
+      const rows = seasonEpisodes.flatMap((s) =>
+        s.episodes.map((ep) => ({
+          user_id: user.id,
+          tmdb_id: tmdbId,
+          season_number: s.season_number,
+          episode_number: ep.episode_number,
+        })),
+      );
+
+      setBulkMessage(`Enregistrement de ${rows.length} épisodes...`);
+
+      const newSet = new Set(watchedSet);
+      rows.forEach((r) => newSet.add(`${r.season_number}-${r.episode_number}`));
+      setWatchedSet(newSet);
+
+      const success = await batchUpsert(rows);
+      await refreshWatched();
+
+      setBulkMessage(success ? null : "⚠️ Une erreur est survenue, réessaie.");
+    } catch (err) {
+      console.error("Erreur marquage multi-saisons:", err);
+      setBulkMessage("⚠️ Une erreur est survenue, réessaie.");
+    } finally {
+      setBulkLoading(false);
+    }
+  }
+
+  async function unmarkFromSeasonWatched(targetSeason: number) {
+    if (!user) return;
+
+    const confirmed = await confirm({
+      title: "Tout décocher",
+      message: `Décocher tous les épisodes de la saison ${targetSeason} et de toutes les saisons suivantes ?`,
+      confirmLabel: "Décocher",
+      danger: true,
+    });
+    if (!confirmed) return;
+
+    setBulkLoading(true);
+    setBulkMessage("Suppression en cours...");
+
+    const { error } = await supabase
+      .from("watched_episodes")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("tmdb_id", tmdbId)
+      .gte("season_number", targetSeason);
+
+    if (error) {
+      console.error("Erreur décochage multi-saisons:", error);
+      setBulkMessage("⚠️ Une erreur est survenue, réessaie.");
+    } else {
+      setBulkMessage(null);
+    }
+
+    await refreshWatched();
     setBulkLoading(false);
   }
 
@@ -262,6 +374,8 @@ export default function SerieDetailPage({
 
   return (
     <main className="max-w-5xl mx-auto p-4 sm:p-8">
+      {dialog}
+
       <div className="flex flex-col gap-6 mb-6 sm:flex-row">
         {show.poster_path && (
           <Image
@@ -269,12 +383,14 @@ export default function SerieDetailPage({
             alt={show.name}
             width={200}
             height={300}
-            className="mx-auto rounded-lg sm:mx-0"
+            className="mx-auto rounded-sm border-4 border-[#111111] sm:mx-0"
           />
         )}
         <div>
-          <h1 className="text-2xl font-bold mb-2 sm:text-3xl">{show.name}</h1>
-          <p className="text-gray-600 mb-4">{show.overview}</p>
+          <h1 className="font-display text-2xl uppercase mb-2 text-[#111111] sm:text-3xl">
+            {show.name}
+          </h1>
+          <p className="text-[#3a3a3a] mb-4">{show.overview}</p>
 
           {user ? (
             <div className="flex gap-2 flex-wrap">
@@ -282,10 +398,10 @@ export default function SerieDetailPage({
                 <button
                   key={s}
                   onClick={() => handleStatusChange(s)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                  className={`manga-btn px-3 py-1.5 text-xs font-bold ${
                     status === s
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      ? "bg-[#E1263F] text-white"
+                      : "bg-white text-[#111111]"
                   }`}
                 >
                   {STATUS_LABELS[s]}
@@ -293,10 +409,14 @@ export default function SerieDetailPage({
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-[#6B6B6B]">
               Connecte-toi pour suivre cette série.
             </p>
           )}
+
+          <div className="mt-3">
+            <TrailerModal videos={show.videos?.results} />
+          </div>
         </div>
       </div>
 
@@ -307,10 +427,10 @@ export default function SerieDetailPage({
             <button
               key={season.id}
               onClick={() => setActiveSeason(season.season_number)}
-              className={`px-4 py-2 rounded-lg whitespace-nowrap text-sm font-medium transition ${
+              className={`manga-btn shrink-0 px-4 py-2 text-xs font-bold whitespace-nowrap ${
                 activeSeason === season.season_number
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? "bg-[#E1263F] text-white"
+                  : "bg-white text-[#111111]"
               }`}
             >
               {season.name}
@@ -319,19 +439,32 @@ export default function SerieDetailPage({
       </div>
 
       {user && activeSeason !== null && activeSeason > 0 && (
-        <button
-          onClick={() => markUpToSeasonWatched(activeSeason)}
-          disabled={bulkLoading}
-          className="mb-6 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition disabled:opacity-50"
-        >
-          {bulkLoading
-            ? "Enregistrement..."
-            : `✓ Tout marquer vu (jusqu'à la saison ${activeSeason})`}
-        </button>
+        <div className="mb-6 flex flex-wrap gap-3">
+          <button
+            onClick={() => markUpToSeasonWatched(activeSeason)}
+            disabled={bulkLoading}
+            className="manga-btn bg-[#111111] px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
+          >
+            ✓ Tout marquer vu (jusqu&apos;à la saison {activeSeason})
+          </button>
+          <button
+            onClick={() => unmarkFromSeasonWatched(activeSeason)}
+            disabled={bulkLoading}
+            className="manga-btn bg-[#E1263F] px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
+          >
+            ✕ Tout décocher (à partir de la saison {activeSeason})
+          </button>
+        </div>
+      )}
+
+      {bulkMessage && (
+        <p className="mb-4 font-mono-utility text-xs text-[#6B6B6B]">
+          {bulkMessage}
+        </p>
       )}
 
       {loadingEpisodes ? (
-        <p>Chargement des épisodes...</p>
+        <p className="text-[#3a3a3a]">Chargement des épisodes...</p>
       ) : (
         <div className="flex flex-col gap-3">
           {episodes.map((ep) => {
@@ -341,8 +474,8 @@ export default function SerieDetailPage({
             return (
               <div
                 key={ep.id}
-                className={`flex gap-4 border rounded-lg p-3 items-start transition ${
-                  isWatched ? "bg-green-50 border-green-200" : ""
+                className={`flex gap-4 p-3 items-start border-4 border-[#111111] transition ${
+                  isWatched ? "bg-[#FFD400]/20" : "bg-white"
                 }`}
               >
                 <input
@@ -351,15 +484,17 @@ export default function SerieDetailPage({
                   onChange={() =>
                     toggleEpisode(activeSeason!, ep.episode_number)
                   }
-                  disabled={!user}
-                  className="mt-1 w-5 h-5 cursor-pointer disabled:cursor-not-allowed"
+                  disabled={!user || bulkLoading}
+                  className="mt-1 w-5 h-5 cursor-pointer accent-[#E1263F] disabled:cursor-not-allowed"
                 />
                 <div>
-                  <p className="font-medium">
+                  <p className="font-bold text-[#111111]">
                     E{ep.episode_number} · {ep.name}
                   </p>
-                  <p className="text-xs text-gray-500 mb-1">{ep.air_date}</p>
-                  <p className="text-sm text-gray-600">{ep.overview}</p>
+                  <p className="font-mono-utility text-xs text-[#6B6B6B] mb-1">
+                    {ep.air_date}
+                  </p>
+                  <p className="text-sm text-[#3a3a3a]">{ep.overview}</p>
                 </div>
               </div>
             );
