@@ -14,7 +14,8 @@ export async function GET(
     );
   }
 
-const url = `https://api.themoviedb.org/3/movie/${id}?api_key=${apiKey}&language=fr-FR&append_to_response=videos&include_video_language=fr,en`;
+  const url = `https://api.themoviedb.org/3/movie/${id}?api_key=${apiKey}&language=fr-FR&append_to_response=videos,credits,similar&include_video_language=fr,en`;
+
   try {
     const response = await fetch(url);
 
@@ -29,9 +30,6 @@ const url = `https://api.themoviedb.org/3/movie/${id}?api_key=${apiKey}&language
     return NextResponse.json(data);
   } catch (error) {
     console.error("Erreur TMDB:", error);
-    return NextResponse.json(
-      { error: "Erreur interne." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur interne." }, { status: 500 });
   }
 }

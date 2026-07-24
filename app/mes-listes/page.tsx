@@ -67,7 +67,7 @@ export default function MesListesPage() {
       (watched || []).forEach((w) => {
         watchedCountByShow.set(
           w.tmdb_id,
-          (watchedCountByShow.get(w.tmdb_id) || 0) + 1
+          (watchedCountByShow.get(w.tmdb_id) || 0) + 1,
         );
       });
 
@@ -88,8 +88,8 @@ export default function MesListesPage() {
             show.media_type === "tv"
               ? watchedCountByShow.get(show.tmdb_id) || 0
               : show.status === "termine"
-              ? 1
-              : 0;
+                ? 1
+                : 0;
 
           return {
             ...show,
@@ -98,7 +98,7 @@ export default function MesListesPage() {
             watchedCount,
             totalCount,
           };
-        })
+        }),
       );
 
       setShows(enriched);
@@ -147,9 +147,13 @@ export default function MesListesPage() {
             </h2>
             <div className="flex flex-col gap-3">
               {filtered.map((show) => {
+                const cappedWatchedCount = Math.min(
+                  show.watchedCount,
+                  show.totalCount,
+                );
                 const percent =
                   show.totalCount > 0
-                    ? Math.round((show.watchedCount / show.totalCount) * 100)
+                    ? Math.round((cappedWatchedCount / show.totalCount) * 100)
                     : 0;
 
                 return (
@@ -184,7 +188,7 @@ export default function MesListesPage() {
                             />
                           </div>
                           <p className="text-xs text-gray-500 mt-1">
-                            {show.watchedCount} / {show.totalCount} épisodes (
+                            {cappedWatchedCount} / {show.totalCount} épisodes (
                             {percent}%)
                           </p>
                         </>

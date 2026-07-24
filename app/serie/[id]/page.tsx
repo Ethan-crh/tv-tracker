@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useConfirm } from "@/components/useConfirm";
 import type { User } from "@supabase/supabase-js";
 import TrailerModal from "@/components/TrailerModal";
+import SimilarRow from "@/components/SimilarRow";
 
 type Season = {
   id: number;
@@ -23,6 +24,9 @@ type ShowDetails = {
   seasons: Season[];
   videos?: {
     results: { key: string; site: string; type: string; iso_639_1?: string }[];
+  };
+  similar?: {
+    results: { id: number; poster_path: string | null; name?: string }[];
   };
 };
 
@@ -165,7 +169,79 @@ export default function SerieDetailPage({
   }, [id, activeSeason]);
 
   async function handleStatusChange(newStatus: Status) {
-    if (!user) return;
+    if (!user || !show) return;
+
+    // Si on reclique sur le statut déjà actif, on le retire complètement
+    if (status === newStatus) {
+      setStatus(null);
+
+      const { error } = await supabase
+        .from("user_shows")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("tmdb_id", tmdbId)
+        .eq("media_type", "tv");
+
+      if (error) {
+        console.error("Erreur suppression statut:", error);
+      }
+      return;
+    }
+
+    // Si on marque "Terminé", on propose de cocher tous les épisodes de toutes les saisons
+    if (newStatus === "termine") {
+      const confirmed = await confirm({
+        title: "Marquer comme terminé",
+        message:
+          "Marquer cette série comme terminée va aussi cocher TOUS les épisodes de TOUTES les saisons comme vus. Continuer ?",
+        confirmLabel: "Marquer terminé",
+      });
+
+      if (confirmed) {
+        setBulkLoading(true);
+        setBulkMessage("Enregistrement en cours...");
+
+        const rows: {
+          user_id: string;
+          tmdb_id: number;
+          season_number: number;
+          episode_number: number;
+        }[] = [];
+
+        const seasonEpisodes = await Promise.all(
+          show.seasons
+            .filter((s) => s.season_number > 0 && s.episode_count > 0)
+            .map(async (s) => {
+              const res = await fetch(
+                `/api/tv/${id}/season/${s.season_number}`,
+              );
+              const data = await res.json();
+              return {
+                season_number: s.season_number,
+                episodes: (data.episodes || []) as Episode[],
+              };
+            }),
+        );
+
+        seasonEpisodes.forEach((s) => {
+          s.episodes.forEach((ep) => {
+            rows.push({
+              user_id: user.id,
+              tmdb_id: tmdbId,
+              season_number: s.season_number,
+              episode_number: ep.episode_number,
+            });
+          });
+        });
+
+        const success = await batchUpsert(rows);
+        await refreshWatched();
+        setBulkMessage(
+          success ? null : "⚠️ Une erreur est survenue, réessaie.",
+        );
+        setBulkLoading(false);
+      }
+    }
 
     setStatus(newStatus);
 
@@ -501,6 +577,11 @@ export default function SerieDetailPage({
           })}
         </div>
       )}
+      <SimilarRow
+        items={show.similar?.results}
+        mediaType="tv"
+        title="Séries similaires"
+      />
     </main>
   );
 }

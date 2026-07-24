@@ -5,6 +5,8 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import TrailerModal from "@/components/TrailerModal";
+import CastRow from "@/components/CastRow";
+import SimilarRow from "@/components/SimilarRow";
 
 type MovieDetails = {
   id: number;
@@ -15,6 +17,17 @@ type MovieDetails = {
   runtime: number;
   videos?: {
     results: { key: string; site: string; type: string; iso_639_1?: string }[];
+  };
+  credits?: {
+    cast: {
+      id: number;
+      name: string;
+      character: string;
+      profile_path: string | null;
+    }[];
+  };
+  similar?: {
+    results: { id: number; poster_path: string | null; title?: string }[];
   };
 };
 
@@ -80,6 +93,20 @@ export default function FilmDetailPage({
   async function handleStatusChange(newStatus: Status) {
     if (!user) return;
 
+    // Si on reclique sur le statut déjà actif, on le retire complètement
+    if (status === newStatus) {
+      setStatus(null);
+
+      await supabase
+        .from("user_shows")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("tmdb_id", tmdbId)
+        .eq("media_type", "movie");
+
+      return;
+    }
+
     setStatus(newStatus);
 
     await supabase.from("user_shows").upsert(
@@ -142,6 +169,12 @@ export default function FilmDetailPage({
           </div>
         </div>
       </div>
+      <CastRow cast={movie.credits?.cast} />
+      <SimilarRow
+        items={movie.similar?.results}
+        mediaType="movie"
+        title="Films similaires"
+      />
     </main>
   );
 }

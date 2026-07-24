@@ -41,6 +41,7 @@ export default function Navbar() {
     { href: "/recherche", label: "Rechercher", icon: "🔍" },
     { href: "/mes-listes", label: "Mes listes", icon: "📋" },
     { href: "/calendrier", label: "Calendrier", icon: "📅" },
+    { href: "/statistiques", label: "Stats", icon: "📊" },
   ];
 
   return (
