@@ -18,17 +18,14 @@ export async function GET() {
   }
 
   const urls = {
-    // Top 20 → 1 page (20 résultats max par page TMDB)
     films: [1].map(
       (page) =>
         `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=fr-FR&page=${page}`
     ),
-    // Top 20
     series: [1].map(
       (page) =>
         `https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&language=fr-FR&sort_by=popularity.desc&without_genres=16&vote_count.gte=100&page=${page}`
     ),
-    // Top 30 → 2 pages, tronqué ensuite à 30 exactement
     animes: [1, 2].map(
       (page) =>
         `https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}` +
@@ -41,24 +38,24 @@ export async function GET() {
     const [filmsData, seriesData, animesData] = await Promise.all([
       Promise.all(
         urls.films.map((url) =>
-          fetch(url, { next: { revalidate: 3600 } }).then((res) => res.json())
+          fetch(url, { next: { revalidate: 21600 } }).then((res) => res.json())
         )
       ),
       Promise.all(
         urls.series.map((url) =>
-          fetch(url, { next: { revalidate: 3600 } }).then((res) => res.json())
+          fetch(url, { next: { revalidate: 21600 } }).then((res) => res.json())
         )
       ),
       Promise.all(
         urls.animes.map((url) =>
-          fetch(url, { next: { revalidate: 3600 } }).then((res) => res.json())
+          fetch(url, { next: { revalidate: 21600 } }).then((res) => res.json())
         )
       ),
     ]);
 
-    const films = filmsData.flatMap((r) => r.results || []).slice(0, 20);
-    const series = seriesData.flatMap((r) => r.results || []).slice(0, 20);
-    const animes = animesData.flatMap((r) => r.results || []).slice(0, 30);
+    const films = filmsData.flatMap((r) => r.results || []).slice(0, 12);
+    const series = seriesData.flatMap((r) => r.results || []).slice(0, 12);
+    const animes = animesData.flatMap((r) => r.results || []).slice(0, 16);
 
     const allResults = [...films, ...series, ...animes];
 
@@ -67,7 +64,16 @@ export async function GET() {
         (item: { backdrop_path: string | null; id: number }) =>
           item.backdrop_path && !BLOCKED_TV_IDS.has(item.id)
       )
-      .map((item: { backdrop_path: string }) => item.backdrop_path);
+      .map(
+        (item: {
+          backdrop_path: string;
+          title?: string;
+          name?: string;
+        }) => ({
+          backdrop_path: item.backdrop_path,
+          title: item.title || item.name || "",
+        })
+      );
 
     return NextResponse.json({ backdrops });
   } catch (error) {

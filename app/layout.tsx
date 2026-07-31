@@ -24,8 +24,15 @@ const mono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "Couzan-desu",
   description: "Suis ta progression dans tes films, séries et animes.",
+  manifest: "/manifest.json",
   icons: {
     icon: "/logo.png",
+    apple: "/logo.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Couzan-desu",
   },
 };
 
@@ -45,3 +52,7 @@ export default function RootLayout({
     </html>
   );
 }
+
+export const viewport = {
+  themeColor: "#E1263F",
+};

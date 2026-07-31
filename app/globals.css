@@ -105,3 +105,11 @@ body {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #e1263f;
+  outline-offset: 2px;
+}

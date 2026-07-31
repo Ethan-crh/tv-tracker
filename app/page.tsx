@@ -16,7 +16,7 @@ export default async function Home() {
         <div className="speed-burst pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 sm:h-[560px] sm:w-[560px]" />
 
         <span className="manga-panel inline-block rotate-[-2deg] bg-[#FFD400] px-2.5 py-1 font-mono-utility text-[10px] font-bold uppercase tracking-widest text-[#111111] sm:px-3 sm:text-xs">
-          話1 · Premier épisode
+          Bienvenue à toi !
         </span>
 
         <h1 className="manga-panel rotate-[-1deg] bg-[#F7F5F0] px-5 py-4 font-display text-3xl uppercase leading-none tracking-tight text-[#111111] sm:px-10 sm:py-6 sm:text-6xl">

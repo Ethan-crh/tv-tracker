@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import Skeleton from "@/components/Skeleton";
 
 type Status = "a_voir" | "en_cours" | "termine" | "abandonne";
 
@@ -112,8 +113,32 @@ export default function StatistiquesPage() {
     load();
   }, [supabase]);
 
-  if (loading) return <p className="p-8">Chargement...</p>;
+if (loading) {
+  return (
+    <main className="max-w-4xl mx-auto p-4 sm:p-8">
+      <Skeleton className="h-8 w-56 mb-2" />
+      <Skeleton className="h-4 w-80 mb-8" />
 
+      <div className="grid grid-cols-2 gap-4 mb-10 sm:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="border-4 border-[#111111]/10 p-4">
+            <Skeleton className="h-8 w-12 mx-auto mb-2" />
+            <Skeleton className="h-3 w-16 mx-auto" />
+          </div>
+        ))}
+      </div>
+
+      <Skeleton className="h-16 w-full mb-10" />
+
+      <Skeleton className="h-6 w-40 mb-4" />
+      <div className="flex flex-col gap-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-10 w-full" />
+        ))}
+      </div>
+    </main>
+  );
+}
   if (!user) {
     return (
       <main className="p-8 text-center">

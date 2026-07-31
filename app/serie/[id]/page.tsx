@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use, useCallback } from "react";
+import { useState, useEffect, use, useCallback, useRef } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { useConfirm } from "@/components/useConfirm";
@@ -73,6 +73,26 @@ export default function SerieDetailPage({
   const [status, setStatus] = useState<Status | null>(null);
   const [watchedSet, setWatchedSet] = useState<Set<string>>(new Set());
 
+  // Cache en mémoire : une fois qu'une saison a été chargée, on ne la redemande plus à TMDB
+  const seasonCache = useRef<Map<number, Episode[]>>(new Map());
+
+  const getSeasonEpisodes = useCallback(
+    async (seasonNumber: number, signal?: AbortSignal): Promise<Episode[]> => {
+      const cached = seasonCache.current.get(seasonNumber);
+      if (cached) return cached;
+
+      const res = await fetch(`/api/tv/${id}/season/${seasonNumber}`, {
+        signal,
+      });
+      const data = await res.json();
+      const eps: Episode[] = data.episodes || [];
+
+      seasonCache.current.set(seasonNumber, eps);
+      return eps;
+    },
+    [id]
+  );
+
   useEffect(() => {
     async function fetchUser() {
       const { data } = await supabase.auth.getUser();
@@ -90,12 +110,12 @@ export default function SerieDetailPage({
       setLoadingShow(false);
 
       const firstRealSeason = data.seasons?.find(
-        (s: Season) => s.season_number > 0,
+        (s: Season) => s.season_number > 0
       );
       setActiveSeason(
         firstRealSeason
           ? firstRealSeason.season_number
-          : data.seasons?.[0]?.season_number,
+          : data.seasons?.[0]?.season_number
       );
     }
     fetchShow();
@@ -116,9 +136,7 @@ export default function SerieDetailPage({
     }
 
     setWatchedSet(
-      new Set(
-        (data || []).map((w) => `${w.season_number}-${w.episode_number}`),
-      ),
+      new Set((data || []).map((w) => `${w.season_number}-${w.episode_number}`))
     );
   }, [user, tmdbId, supabase]);
 
@@ -140,6 +158,7 @@ export default function SerieDetailPage({
     refreshWatched();
   }, [user, tmdbId, supabase, refreshWatched]);
 
+  // Chargement des épisodes de la saison active, via le cache en priorité
   useEffect(() => {
     if (activeSeason === null) return;
 
@@ -149,11 +168,8 @@ export default function SerieDetailPage({
       setLoadingEpisodes(true);
 
       try {
-        const res = await fetch(`/api/tv/${id}/season/${activeSeason}`, {
-          signal: controller.signal,
-        });
-        const data = await res.json();
-        setEpisodes(data.episodes || []);
+        const eps = await getSeasonEpisodes(activeSeason as number, controller.signal);
+        setEpisodes(eps);
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") return;
         console.error("Erreur chargement épisodes:", err);
@@ -166,12 +182,11 @@ export default function SerieDetailPage({
     fetchEpisodes();
 
     return () => controller.abort();
-  }, [id, activeSeason]);
+  }, [activeSeason, getSeasonEpisodes]);
 
   async function handleStatusChange(newStatus: Status) {
     if (!user || !show) return;
 
-    // Si on reclique sur le statut déjà actif, on le retire complètement
     if (status === newStatus) {
       setStatus(null);
 
@@ -188,7 +203,6 @@ export default function SerieDetailPage({
       return;
     }
 
-    // Si on marque "Terminé", on propose de cocher tous les épisodes de toutes les saisons
     if (newStatus === "termine") {
       const confirmed = await confirm({
         title: "Marquer comme terminé",
@@ -201,44 +215,29 @@ export default function SerieDetailPage({
         setBulkLoading(true);
         setBulkMessage("Enregistrement en cours...");
 
-        const rows: {
-          user_id: string;
-          tmdb_id: number;
-          season_number: number;
-          episode_number: number;
-        }[] = [];
-
-        const seasonEpisodes = await Promise.all(
-          show.seasons
-            .filter((s) => s.season_number > 0 && s.episode_count > 0)
-            .map(async (s) => {
-              const res = await fetch(
-                `/api/tv/${id}/season/${s.season_number}`,
-              );
-              const data = await res.json();
-              return {
-                season_number: s.season_number,
-                episodes: (data.episodes || []) as Episode[],
-              };
-            }),
+        const seasonsToMark = show.seasons.filter(
+          (s) => s.season_number > 0 && s.episode_count > 0
         );
 
-        seasonEpisodes.forEach((s) => {
-          s.episodes.forEach((ep) => {
-            rows.push({
-              user_id: user.id,
-              tmdb_id: tmdbId,
-              season_number: s.season_number,
-              episode_number: ep.episode_number,
-            });
-          });
-        });
+        const seasonEpisodes = await Promise.all(
+          seasonsToMark.map(async (s) => ({
+            season_number: s.season_number,
+            episodes: await getSeasonEpisodes(s.season_number),
+          }))
+        );
+
+        const rows = seasonEpisodes.flatMap((s) =>
+          s.episodes.map((ep) => ({
+            user_id: user.id,
+            tmdb_id: tmdbId,
+            season_number: s.season_number,
+            episode_number: ep.episode_number,
+          }))
+        );
 
         const success = await batchUpsert(rows);
         await refreshWatched();
-        setBulkMessage(
-          success ? null : "⚠️ Une erreur est survenue, réessaie.",
-        );
+        setBulkMessage(success ? null : "⚠️ Une erreur est survenue, réessaie.");
         setBulkLoading(false);
       }
     }
@@ -252,7 +251,7 @@ export default function SerieDetailPage({
         media_type: "tv",
         status: newStatus,
       },
-      { onConflict: "user_id,tmdb_id,media_type" },
+      { onConflict: "user_id,tmdb_id,media_type" }
     );
   }
 
@@ -262,9 +261,9 @@ export default function SerieDetailPage({
       tmdb_id: number;
       season_number: number;
       episode_number: number;
-    }[],
+    }[]
   ): Promise<boolean> {
-    const chunks: (typeof rows)[] = [];
+    const chunks: typeof rows[] = [];
     for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
       chunks.push(rows.slice(i, i + CHUNK_SIZE));
     }
@@ -273,17 +272,15 @@ export default function SerieDetailPage({
 
     await Promise.all(
       chunks.map(async (chunk) => {
-        const { error } = await supabase
-          .from("watched_episodes")
-          .upsert(chunk, {
-            onConflict: "user_id,tmdb_id,season_number,episode_number",
-            ignoreDuplicates: true,
-          });
+        const { error } = await supabase.from("watched_episodes").upsert(chunk, {
+          onConflict: "user_id,tmdb_id,season_number,episode_number",
+          ignoreDuplicates: true,
+        });
         if (error) {
           console.error("Erreur upsert par lot:", error);
           hasError = true;
         }
-      }),
+      })
     );
 
     return !hasError;
@@ -317,7 +314,7 @@ export default function SerieDetailPage({
       }
 
       const episodesToMark = episodes.filter(
-        (ep) => ep.episode_number <= episodeNumber,
+        (ep) => ep.episode_number <= episodeNumber
       );
       if (episodesToMark.length === 0) return;
 
@@ -351,17 +348,14 @@ export default function SerieDetailPage({
       setBulkMessage(success ? null : "⚠️ Une erreur est survenue, réessaie.");
       setBulkLoading(false);
     },
-    [user, tmdbId, watchedSet, supabase, refreshWatched, episodes, confirm],
+    [user, tmdbId, watchedSet, supabase, refreshWatched, episodes, confirm]
   );
 
   async function markUpToSeasonWatched(targetSeason: number) {
     if (!user || !show) return;
 
     const seasonsToMark = show.seasons.filter(
-      (s) =>
-        s.season_number > 0 &&
-        s.season_number <= targetSeason &&
-        s.episode_count > 0,
+      (s) => s.season_number > 0 && s.season_number <= targetSeason && s.episode_count > 0
     );
 
     const confirmed = await confirm({
@@ -376,14 +370,10 @@ export default function SerieDetailPage({
 
     try {
       const seasonEpisodes = await Promise.all(
-        seasonsToMark.map(async (s) => {
-          const res = await fetch(`/api/tv/${id}/season/${s.season_number}`);
-          const data = await res.json();
-          return {
-            season_number: s.season_number,
-            episodes: (data.episodes || []) as Episode[],
-          };
-        }),
+        seasonsToMark.map(async (s) => ({
+          season_number: s.season_number,
+          episodes: await getSeasonEpisodes(s.season_number),
+        }))
       );
 
       const rows = seasonEpisodes.flatMap((s) =>
@@ -392,7 +382,7 @@ export default function SerieDetailPage({
           tmdb_id: tmdbId,
           season_number: s.season_number,
           episode_number: ep.episode_number,
-        })),
+        }))
       );
 
       setBulkMessage(`Enregistrement de ${rows.length} épisodes...`);
@@ -436,6 +426,38 @@ export default function SerieDetailPage({
 
     if (error) {
       console.error("Erreur décochage multi-saisons:", error);
+      setBulkMessage("⚠️ Une erreur est survenue, réessaie.");
+    } else {
+      setBulkMessage(null);
+    }
+
+    await refreshWatched();
+    setBulkLoading(false);
+  }
+
+  async function resetAllWatched() {
+    if (!user) return;
+
+    const confirmed = await confirm({
+      title: "Réinitialiser la progression",
+      message:
+        "Ceci va supprimer TOUT l'historique d'épisodes vus pour cette série (utile si ta progression semble incorrecte à cause d'un ancien bug). Cette action est irréversible. Continuer ?",
+      confirmLabel: "Tout réinitialiser",
+      danger: true,
+    });
+    if (!confirmed) return;
+
+    setBulkLoading(true);
+    setBulkMessage("Réinitialisation en cours...");
+
+    const { error } = await supabase
+      .from("watched_episodes")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("tmdb_id", tmdbId);
+
+    if (error) {
+      console.error("Erreur réinitialisation:", error);
       setBulkMessage("⚠️ Une erreur est survenue, réessaie.");
     } else {
       setBulkMessage(null);
@@ -529,6 +551,13 @@ export default function SerieDetailPage({
             className="manga-btn bg-[#E1263F] px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
           >
             ✕ Tout décocher (à partir de la saison {activeSeason})
+          </button>
+          <button
+            onClick={resetAllWatched}
+            disabled={bulkLoading}
+            className="manga-btn bg-white px-4 py-2 text-xs font-bold text-[#6B6B6B] disabled:opacity-50"
+          >
+            ⟲ Réinitialiser toute la progression
           </button>
         </div>
       )}

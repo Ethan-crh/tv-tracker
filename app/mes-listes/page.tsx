@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import Skeleton from "@/components/Skeleton";
 
 type Status = "a_voir" | "en_cours" | "termine" | "abandonne";
 
@@ -108,8 +109,25 @@ export default function MesListesPage() {
     load();
   }, [supabase]);
 
-  if (loading) return <p className="p-8">Chargement...</p>;
-
+if (loading) {
+  return (
+    <main className="max-w-4xl mx-auto p-4 sm:p-8">
+      <Skeleton className="h-8 w-48 mb-6" />
+      <div className="flex flex-col gap-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="flex gap-4 border rounded-lg p-3 items-center">
+            <Skeleton className="w-[60px] h-[90px] shrink-0" />
+            <div className="flex-1">
+              <Skeleton className="h-4 w-2/3 mb-2" />
+              <Skeleton className="h-2 w-full mb-2" />
+              <Skeleton className="h-3 w-1/3" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </main>
+  );
+}
   if (!user) {
     return (
       <main className="p-8 text-center">
