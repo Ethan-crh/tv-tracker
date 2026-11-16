@@ -1,115 +1,287 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* -------------------------------------------------------------------------
+   Design tokens — identité « planche manga » : encre, papier, rouge, jaune.
+   ------------------------------------------------------------------------- */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-ink: #111111;
+  --color-ink-soft: #3a3a3a;
+  --color-muted: #6b6b6b;
+  --color-line: #1111111f;
+  --color-paper: #f7f5f0;
+  --color-paper-deep: #ebe7dd;
+  --color-card: #ffffff;
+  --color-accent: #e1263f;
+  --color-accent-deep: #b9182f;
+  --color-sun: #ffd400;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --font-sans: var(--ff-body), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--ff-display), var(--ff-body), sans-serif;
+  --font-mono: var(--ff-mono), ui-monospace, monospace;
+
+  --shadow-hard-sm: 2px 2px 0 #111111;
+  --shadow-hard: 4px 4px 0 #111111;
+  --shadow-hard-lg: 7px 7px 0 #111111;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-spin-slow: spin 90s linear infinite;
+  --animate-kenburns: kenburns 9s ease-out both;
+
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes kenburns {
+    from {
+      transform: scale(1.02);
+    }
+    to {
+      transform: scale(1.12) translate3d(-1%, -1%, 0);
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    min-height: 100dvh;
+  }
+
+  ::selection {
+    background: var(--color-sun);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+
+  button:not(:disabled),
+  [role="checkbox"]:not([aria-disabled="true"]),
+  summary {
+    cursor: pointer;
+  }
 }
 
-body {
-  background-color: #f7f5f0;
-  color: #111111;
-  font-family: var(--font-body), sans-serif;
+@layer components {
+  /* Trame de points façon impression manga (screentone). */
+  .halftone {
+    background-image: radial-gradient(#1111111f 1px, transparent 1.5px);
+    background-size: 10px 10px;
+  }
+  .halftone-light {
+    background-image: radial-gradient(#ffffff26 1px, transparent 1.5px);
+    background-size: 10px 10px;
+  }
+
+  /* Éclat de lignes de vitesse. */
+  .speed-burst {
+    background: repeating-conic-gradient(
+      from 0deg,
+      #111111 0deg 2deg,
+      transparent 2deg 10deg
+    );
+    border-radius: 9999px;
+    mask-image: radial-gradient(circle, transparent 28%, #000 30%, transparent 70%);
+  }
+
+  /* Case de planche : bordure encre + ombre portée dure. */
+  .panel {
+    border: 2px solid var(--color-ink);
+    border-radius: 4px;
+    background: var(--color-card);
+    box-shadow: var(--shadow-hard);
+  }
+  .panel-lg {
+    box-shadow: var(--shadow-hard-lg);
+  }
+
+  /* Petit libellé technique en capitales. */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 2px solid var(--color-ink);
+    border-radius: 4px;
+    padding: 0.55rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    line-height: 1.2;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--color-ink);
+    background: var(--color-card);
+    box-shadow: var(--shadow-hard-sm);
+    transition:
+      transform 0.18s var(--ease-out-expo),
+      box-shadow 0.18s var(--ease-out-expo),
+      background-color 0.18s ease,
+      color 0.18s ease;
+  }
+  .btn:hover:not(:disabled) {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-hard);
+  }
+  .btn:active:not(:disabled) {
+    transform: translate(1px, 1px);
+    box-shadow: 0 0 0 var(--color-ink);
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn-lg {
+    padding: 0.8rem 1.4rem;
+    font-size: 0.8125rem;
+  }
+  .btn-sm {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.6875rem;
+  }
+  .btn-primary {
+    background: var(--color-accent);
+    color: #fff;
+  }
+  .btn-ink {
+    background: var(--color-ink);
+    color: #fff;
+  }
+  .btn-sun {
+    background: var(--color-sun);
+  }
+  .btn-quiet {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    color: var(--color-muted);
+  }
+  .btn-quiet:hover:not(:disabled) {
+    transform: none;
+    box-shadow: none;
+    color: var(--color-ink);
+    background: var(--color-line);
+  }
+
+  /* Puce de filtre / onglet. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 2px solid var(--color-ink);
+    border-radius: 9999px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    white-space: nowrap;
+    background: var(--color-card);
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease,
+      transform 0.15s var(--ease-out-expo);
+  }
+  .chip:hover {
+    transform: translateY(-1px);
+  }
+  .chip[aria-pressed="true"],
+  .chip[aria-selected="true"] {
+    background: var(--color-ink);
+    color: #fff;
+  }
+
+  .field {
+    width: 100%;
+    border: 2px solid var(--color-ink);
+    border-radius: 4px;
+    background: var(--color-card);
+    padding: 0.7rem 0.9rem;
+    font-size: 1rem;
+    transition: box-shadow 0.18s var(--ease-out-expo);
+  }
+  .field::placeholder {
+    color: #9a968c;
+  }
+  .field:focus {
+    outline: none;
+    box-shadow: var(--shadow-hard);
+  }
+
+  .skeleton {
+    border-radius: 4px;
+    background: linear-gradient(
+      100deg,
+      #1111110f 30%,
+      #1111111f 50%,
+      #1111110f 70%
+    );
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+  }
+
+  .link {
+    text-decoration: underline;
+    text-decoration-color: var(--color-accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+    transition: color 0.15s ease;
+  }
+  .link:hover {
+    color: var(--color-accent);
+  }
 }
 
-.font-display {
-  font-family: var(--font-display), sans-serif;
+@utility scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-.font-mono-utility {
-  font-family: var(--font-mono), monospace;
-}
-
-/* Fond papier avec trame de points façon impression manga (screentone) */
-.halftone-bg {
-  background-color: #f7f5f0;
-  background-image: radial-gradient(#11111122 1px, transparent 1.5px);
-  background-size: 10px 10px;
-}
-
-/* Éclat de lignes de vitesse derrière le titre */
-.speed-burst {
-  background: repeating-conic-gradient(
-    from 0deg,
-    #111111 0deg 2deg,
-    transparent 2deg 10deg
-  );
-  border-radius: 9999px;
-  opacity: 0.07;
-}
-
-/* Case de planche manga : bordure épaisse + ombre portée dure */
-.manga-panel {
-  border: 4px solid #111111;
-  box-shadow: 8px 8px 0 #111111;
-}
-
-/* Bouton façon case de manga */
-.manga-btn {
-  display: inline-block;
-  border: 3px solid #111111;
-  font-family: var(--font-mono), monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  box-shadow: 4px 4px 0 #111111;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.manga-btn:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 #111111;
-}
-.manga-btn:active {
-  transform: translate(0, 0);
-  box-shadow: 2px 2px 0 #111111;
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-    transition: none !important;
+  html {
+    scroll-behavior: auto;
   }
-  .manga-btn:hover,
-  .manga-btn:active {
-    transform: none;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-}
-
-.halftone-overlay {
-  background-image: radial-gradient(#11111133 1px, transparent 1.5px);
-  background-size: 10px 10px;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-hide {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-a:focus-visible,
-button:focus-visible,
-input:focus-visible,
-[role="button"]:focus-visible {
-  outline: 2px solid #e1263f;
-  outline-offset: 2px;
 }

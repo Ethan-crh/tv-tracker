@@ -1,86 +1,123 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import BackgroundCarousel from "@/components/BackgroundCarousel";
+import HomeHero from "@/components/HomeHero";
+import Marquee from "@/components/Marquee";
+import PosterRail from "@/components/PosterRail";
+import { Reveal, Stagger, StaggerItem } from "@/components/Reveal";
+import {
+  ArrowRightIcon,
+  CalendarIcon,
+  ChartIcon,
+  CheckIcon,
+} from "@/components/Icons";
+import { getBackdrops, getTopItems } from "@/lib/tmdb";
+
+// Page statique, régénérée au plus une fois par heure.
+export const revalidate = 3600;
+
+const FEATURES = [
+  {
+    href: "/mes-listes",
+    Icon: CheckIcon,
+    kana: "01",
+    title: "Coche, épisode par épisode",
+    text: "Marque ce que tu as vu, saison par saison, et reprends exactement là où tu t'étais arrêté.",
+    accent: "bg-accent text-white",
+  },
+  {
+    href: "/calendrier",
+    Icon: CalendarIcon,
+    kana: "02",
+    title: "Ne rate plus une sortie",
+    text: "Le prochain épisode de tes séries en cours et les films qui arrivent au cinéma, au même endroit.",
+    accent: "bg-sun",
+  },
+  {
+    href: "/statistiques",
+    Icon: ChartIcon,
+    kana: "03",
+    title: "Tes chiffres, sans tricher",
+    text: "Heures regardées, épisodes vus, genres préférés : le bilan honnête de ton temps d'écran.",
+    accent: "bg-ink text-white",
+  },
+];
 
 export default async function Home() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [backdrops, films, animes] = await Promise.all([
+    getBackdrops().catch(() => []),
+    getTopItems("films", 20).catch(() => []),
+    getTopItems("animes", 20).catch(() => []),
+  ]);
 
   return (
-    <main className="relative min-h-screen overflow-hidden">
-      <BackgroundCarousel />
+    <main>
+      <HomeHero backdrops={backdrops} />
+      <Marquee
+        words={["Films", "Séries", "Animes", "つづく", "Calendrier", "Statistiques"]}
+      />
 
-      <div className="relative mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center gap-6 px-4 py-12 text-center sm:gap-8 sm:px-8">
-        <div className="speed-burst pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 sm:h-[560px] sm:w-[560px]" />
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+        <Reveal>
+          <p className="eyebrow mb-2">Comment ça marche</p>
+          <h2 className="max-w-xl font-display text-2xl leading-tight sm:text-4xl">
+            Tout ton suivi, en trois cases.
+          </h2>
+        </Reveal>
 
-        <span className="manga-panel inline-block rotate-[-2deg] bg-[#FFD400] px-2.5 py-1 font-mono-utility text-[10px] font-bold uppercase tracking-widest text-[#111111] sm:px-3 sm:text-xs">
-          Bienvenue à toi !
-        </span>
-
-        <h1 className="manga-panel rotate-[-1deg] bg-[#F7F5F0] px-5 py-4 font-display text-3xl uppercase leading-none tracking-tight text-[#111111] sm:px-10 sm:py-6 sm:text-6xl">
-          My Tv-Board
-        </h1>
-
-        <p className="max-w-xs text-sm text-[#3a3a3a] sm:max-w-md sm:text-base">
-          Films, séries, animes — coche chaque épisode et retrouve toujours
-          où tu en es.
-        </p>
-
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-          <Link
-            href="/recherche"
-            className="manga-btn bg-[#E1263F] px-5 py-2.5 text-xs font-bold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E1263F] sm:px-7 sm:py-3 sm:text-sm"
-          >
-            Rechercher un titre
-          </Link>
-
-          {user && (
-            <>
+        <Stagger gap={0.12} className="mt-10 grid gap-6 md:grid-cols-3">
+          {FEATURES.map(({ href, Icon, kana, title, text, accent }) => (
+            <StaggerItem key={href}>
               <Link
-                href="/mes-listes"
-                className="manga-btn bg-white px-5 py-2.5 text-xs font-bold text-[#111111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E1263F] sm:px-7 sm:py-3 sm:text-sm"
+                href={href}
+                className="panel group relative flex h-full flex-col overflow-hidden p-6 transition-[transform,box-shadow] duration-300 ease-out-expo hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg"
               >
-                Mes listes
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -right-2 -top-6 font-display text-[7rem] leading-none text-ink/[0.06] transition-transform duration-500 ease-out-expo group-hover:-rotate-6 group-hover:scale-110"
+                >
+                  {kana}
+                </span>
+                <span
+                  className={`mb-5 flex h-11 w-11 items-center justify-center rounded-[4px] border-2 border-ink ${accent}`}
+                >
+                  <Icon size={20} />
+                </span>
+                <h3 className="font-display text-lg leading-snug">{title}</h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-ink-soft">
+                  {text}
+                </p>
+                <span className="mt-5 flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-accent">
+                  Ouvrir
+                  <ArrowRightIcon
+                    size={14}
+                    className="transition-transform duration-300 group-hover:translate-x-1"
+                  />
+                </span>
               </Link>
-              <Link
-                href="/calendrier"
-                className="manga-btn bg-white px-5 py-2.5 text-xs font-bold text-[#111111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E1263F] sm:px-7 sm:py-3 sm:text-sm"
-              >
-                Calendrier
-              </Link>
-            </>
-          )}
-        </div>
+            </StaggerItem>
+          ))}
+        </Stagger>
+      </section>
 
-        <div className="mt-3 font-mono-utility text-xs text-[#6B6B6B] sm:mt-4">
-          {user ? (
-            <p>
-              Connecté · <span className="text-[#111111]">{user.email}</span>
-            </p>
-          ) : (
-            <p className="flex gap-4">
-              <Link
-                href="/login"
-                className="underline decoration-[#E1263F] underline-offset-4 hover:text-[#111111]"
-              >
-                Se connecter
-              </Link>
-              <Link
-                href="/signup"
-                className="underline decoration-[#E1263F] underline-offset-4 hover:text-[#111111]"
-              >
-                S&apos;inscrire
-              </Link>
-            </p>
-          )}
-        </div>
-
-        <p className="mt-4 font-display text-base text-[#6B6B6B] sm:mt-6 sm:text-lg">
-          つづく…
-        </p>
-      </div>
+      {(films.length > 0 || animes.length > 0) && (
+        <section className="mx-auto flex max-w-6xl flex-col gap-12 overflow-hidden px-4 sm:px-6">
+          <Reveal>
+            <PosterRail
+              eyebrow="En ce moment"
+              title="Top films"
+              items={films}
+              ranked
+            />
+          </Reveal>
+          <Reveal>
+            <PosterRail
+              eyebrow="En ce moment"
+              title="Top animes"
+              items={animes}
+              ranked
+            />
+          </Reveal>
+        </section>
+      )}
     </main>
   );
 }

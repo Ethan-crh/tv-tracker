@@ -1,47 +1,40 @@
-"use client";
-
 import Image from "next/image";
+import Rail from "@/components/Rail";
+import { tmdbImage } from "@/lib/images";
+import type { CastMember } from "@/lib/types";
 
-type CastMember = {
-  id: number;
-  name: string;
-  character: string;
-  profile_path: string | null;
-};
-
-export default function CastRow({ cast }: { cast: CastMember[] | undefined }) {
-  const filtered = (cast || []).slice(0, 12);
-
-  if (filtered.length === 0) return null;
+export default function CastRow({ cast }: { cast: CastMember[] }) {
+  if (cast.length === 0) return null;
 
   return (
-    <section className="mt-8">
-      <h2 className="font-display text-xl uppercase mb-3 text-[#111111]">
-        Casting
-      </h2>
-      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-        {filtered.map((member) => (
-          <div key={member.id} className="flex-shrink-0 w-[100px] text-center">
+    <Rail title="Casting">
+      {cast.map((member) => (
+        <div key={member.id} className="w-[96px] shrink-0 snap-start text-center">
+          <div className="relative mx-auto h-[88px] w-[88px] overflow-hidden rounded-full border-2 border-ink bg-paper-deep">
             {member.profile_path ? (
               <Image
-                src={`https://image.tmdb.org/t/p/w185${member.profile_path}`}
-                alt={member.name}
-                width={100}
-                height={100}
-                className="rounded-full border-4 border-[#111111] object-cover aspect-square"
+                src={tmdbImage(member.profile_path, "w185")}
+                alt=""
+                fill
+                sizes="88px"
+                className="object-cover"
               />
             ) : (
-              <div className="w-[100px] h-[100px] rounded-full border-4 border-[#111111] bg-gray-200" />
+              <span className="halftone flex h-full items-center justify-center font-display text-2xl text-muted">
+                {member.name.charAt(0)}
+              </span>
             )}
-            <p className="mt-2 text-xs font-bold text-[#111111] line-clamp-1">
-              {member.name}
-            </p>
-            <p className="text-[10px] text-[#6B6B6B] line-clamp-1">
+          </div>
+          <p className="mt-2 line-clamp-2 text-xs font-bold leading-tight">
+            {member.name}
+          </p>
+          {member.character && (
+            <p className="mt-0.5 line-clamp-2 text-[11px] leading-tight text-muted">
               {member.character}
             </p>
-          </div>
-        ))}
-      </div>
-    </section>
+          )}
+        </div>
+      ))}
+    </Rail>
   );
 }

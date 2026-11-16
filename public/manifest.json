@@ -2,6 +2,7 @@
   "name": "Couzan-desu",
   "short_name": "Couzan-desu",
   "description": "Suis ta progression dans tes films, séries et animes.",
+  "lang": "fr",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F7F5F0",
@@ -9,9 +10,9 @@
   "icons": [
     {
       "src": "/logo.png",
-      "sizes": "512x512",
+      "sizes": "305x308",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }

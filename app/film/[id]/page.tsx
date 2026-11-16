@@ -1,180 +1,74 @@
-"use client";
-
-import { useState, useEffect, use } from "react";
-import Image from "next/image";
-import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
-import TrailerModal from "@/components/TrailerModal";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { cache } from "react";
 import CastRow from "@/components/CastRow";
-import SimilarRow from "@/components/SimilarRow";
+import MediaHero from "@/components/MediaHero";
+import MovieActions from "@/components/MovieActions";
+import PosterRail from "@/components/PosterRail";
+import { Reveal } from "@/components/Reveal";
+import TrailerModal from "@/components/TrailerModal";
+import { formatRuntime } from "@/lib/dates";
+import { getMovie, parseId, TmdbError } from "@/lib/tmdb";
 
-type MovieDetails = {
-  id: number;
-  title: string;
-  overview: string;
-  poster_path: string | null;
-  release_date: string;
-  runtime: number;
-  videos?: {
-    results: { key: string; site: string; type: string; iso_639_1?: string }[];
-  };
-  credits?: {
-    cast: {
-      id: number;
-      name: string;
-      character: string;
-      profile_path: string | null;
-    }[];
-  };
-  similar?: {
-    results: { id: number; poster_path: string | null; title?: string }[];
-  };
-};
+type Props = { params: Promise<{ id: string }> };
 
-type Status = "a_voir" | "en_cours" | "termine" | "abandonne";
+// Mis en cache une heure, partagé entre generateMetadata et la page.
+export const revalidate = 3600;
 
-const STATUS_LABELS: Record<Status, string> = {
-  a_voir: "À voir",
-  en_cours: "En cours",
-  termine: "Vu",
-  abandonne: "Abandonné",
-};
-
-export default function FilmDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = use(params);
-  const tmdbId = parseInt(id, 10);
-  const supabase = createClient();
-
-  const [movie, setMovie] = useState<MovieDetails | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const [status, setStatus] = useState<Status | null>(null);
-
-  useEffect(() => {
-    async function fetchUser() {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-    }
-    fetchUser();
-  }, [supabase]);
-
-  useEffect(() => {
-    async function fetchMovie() {
-      setLoading(true);
-      const res = await fetch(`/api/movie/${id}`);
-      const data = await res.json();
-      setMovie(data);
-      setLoading(false);
-    }
-    fetchMovie();
-  }, [id]);
-
-  useEffect(() => {
-    if (!user) return;
-
-    async function fetchStatus() {
-      const { data } = await supabase
-        .from("user_shows")
-        .select("status")
-        .eq("user_id", user!.id)
-        .eq("tmdb_id", tmdbId)
-        .eq("media_type", "movie")
-        .maybeSingle();
-
-      if (data) setStatus(data.status as Status);
-    }
-    fetchStatus();
-  }, [user, tmdbId, supabase]);
-
-  async function handleStatusChange(newStatus: Status) {
-    if (!user) return;
-
-    // Si on reclique sur le statut déjà actif, on le retire complètement
-    if (status === newStatus) {
-      setStatus(null);
-
-      await supabase
-        .from("user_shows")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("tmdb_id", tmdbId)
-        .eq("media_type", "movie");
-
-      return;
-    }
-
-    setStatus(newStatus);
-
-    await supabase.from("user_shows").upsert(
-      {
-        user_id: user.id,
-        tmdb_id: tmdbId,
-        media_type: "movie",
-        status: newStatus,
-      },
-      { onConflict: "user_id,tmdb_id,media_type" },
-    );
+const loadMovie = cache(async (rawId: string) => {
+  const id = parseId(rawId);
+  if (id === null) notFound();
+  try {
+    return await getMovie(id);
+  } catch (error) {
+    if (error instanceof TmdbError && error.status === 404) notFound();
+    throw error;
   }
+});
 
-  if (loading) return <p className="p-8">Chargement...</p>;
-  if (!movie) return <p className="p-8">Film introuvable.</p>;
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const movie = await loadMovie((await params).id);
+  return {
+    title: movie.title,
+    description: movie.overview.slice(0, 160) || undefined,
+  };
+}
+
+export default async function FilmPage({ params }: Props) {
+  const movie = await loadMovie((await params).id);
+
+  const facts = [
+    movie.release_date?.slice(0, 4),
+    movie.runtime ? formatRuntime(movie.runtime) : null,
+  ].filter((f): f is string => Boolean(f));
 
   return (
-    <main className="max-w-3xl mx-auto p-8">
-      <div className="flex flex-col gap-6 sm:flex-row">
-        {movie.poster_path && (
-          <Image
-            src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
-            alt={movie.title}
-            width={220}
-            height={330}
-            className="mx-auto rounded-lg sm:mx-0"
-          />
-        )}
+    <main>
+      <MediaHero
+        title={movie.title}
+        tagline={movie.tagline}
+        overview={movie.overview}
+        posterPath={movie.poster_path}
+        backdropPath={movie.backdrop_path}
+        kindLabel="Film"
+        facts={facts}
+        genres={movie.genres.map((g) => g.name)}
+        rating={movie.vote_average}
+      >
+        <MovieActions movieId={movie.id} />
         <div>
-          <h1 className="text-3xl font-bold mb-2">{movie.title}</h1>
-          <p className="text-sm text-gray-500 mb-4">
-            {movie.release_date?.slice(0, 4)}
-            {movie.runtime ? ` · ${movie.runtime} min` : ""}
-          </p>
-          <p className="text-gray-600 mb-4">{movie.overview}</p>
-
-          {user ? (
-            <div className="flex gap-2 flex-wrap">
-              {(Object.keys(STATUS_LABELS) as Status[]).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => handleStatusChange(s)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                    status === s
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {STATUS_LABELS[s]}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500">
-              Connecte-toi pour suivre ce film.
-            </p>
-          )}
-          <div className="mt-3">
-            <TrailerModal videos={movie.videos?.results} />
-          </div>
+          <TrailerModal trailer={movie.trailer} />
         </div>
+      </MediaHero>
+
+      <div className="mx-auto flex max-w-6xl flex-col gap-12 overflow-hidden px-4 py-10 sm:px-6 sm:py-14">
+        <Reveal>
+          <CastRow cast={movie.cast} />
+        </Reveal>
+        <Reveal>
+          <PosterRail title="Films similaires" items={movie.similar} />
+        </Reveal>
       </div>
-      <CastRow cast={movie.credits?.cast} />
-      <SimilarRow
-        items={movie.similar?.results}
-        mediaType="movie"
-        title="Films similaires"
-      />
     </main>
   );
 }

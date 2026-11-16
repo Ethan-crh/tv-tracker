@@ -1,4 +1,4 @@
-// IDs de genres TMDB, stables et documentés officiellement
+// Identifiants de genres TMDB (stables et documentés).
 export const MOVIE_GENRES = [
   { id: 28, label: "Action" },
   { id: 12, label: "Aventure" },
@@ -32,4 +32,10 @@ export const SORT_OPTIONS = [
   { value: "popularity.desc", label: "Popularité" },
   { value: "vote_average.desc", label: "Mieux notés" },
   { value: "release_date.desc", label: "Plus récents" },
-];
+] as const;
+
+export const DISCOVER_TYPES = [
+  { value: "movie", label: "Films" },
+  { value: "serie", label: "Séries" },
+  { value: "anime", label: "Animes" },
+] as const;

@@ -3,33 +3,30 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import { motion } from "motion/react";
+import { useAuth } from "@/components/AuthProvider";
+import {
+  CalendarIcon,
+  ChartIcon,
+  ListIcon,
+  LogoutIcon,
+  SearchIcon,
+  UserIcon,
+} from "@/components/Icons";
+
+const LINKS = [
+  { href: "/recherche", label: "Explorer", Icon: SearchIcon },
+  { href: "/mes-listes", label: "Mes listes", Icon: ListIcon },
+  { href: "/calendrier", label: "Calendrier", Icon: CalendarIcon },
+  { href: "/statistiques", label: "Stats", Icon: ChartIcon },
+];
+
+const SPRING = { type: "spring", stiffness: 480, damping: 36 } as const;
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const supabase = createClient();
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    async function loadUser() {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-    }
-    loadUser();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-      },
-    );
-
-    return () => listener.subscription.unsubscribe();
-  }, [supabase]);
-
-  if (pathname === "/") return null;
+  const { supabase, user, loading } = useAuth();
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -37,108 +34,112 @@ export default function Navbar() {
     router.refresh();
   }
 
-  const links = [
-    { href: "/recherche", label: "Rechercher", icon: "🔍" },
-    { href: "/mes-listes", label: "Mes listes", icon: "📋" },
-    { href: "/calendrier", label: "Calendrier", icon: "📅" },
-    { href: "/statistiques", label: "Stats", icon: "📊" },
-  ];
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
+
+  const account = loading ? (
+    <span className="h-9 w-24" />
+  ) : user ? (
+    <button
+      onClick={handleLogout}
+      className="btn btn-quiet"
+      title={user.email ?? undefined}
+    >
+      <LogoutIcon size={16} />
+      <span className="hidden md:inline">Déconnexion</span>
+    </button>
+  ) : (
+    <Link href="/login" className="btn btn-ink">
+      <UserIcon size={16} />
+      Connexion
+    </Link>
+  );
 
   return (
     <>
-      {/* Barre du haut : logo + compte, visible partout */}
-      <nav className="halftone-bg sticky top-0 z-50 border-b-4 border-[#111111]">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2 sm:px-6 sm:py-2.5">
-          <Link href="/" className="flex items-center gap-2 sm:gap-4">
+      <header className="sticky top-0 z-50 border-b-2 border-ink bg-paper/90 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:h-16 sm:px-6">
+          <Link href="/" className="group flex items-center gap-2.5">
             <Image
               src="/logo.png"
-              alt="Mon Tracker"
-              width={38}
-              height={38}
-              className="rounded-sm border-4 border-[#111111]"
+              alt=""
+              width={36}
+              height={36}
+              className="rounded-[4px] border-2 border-ink transition-transform duration-300 ease-out-expo group-hover:-rotate-6 group-hover:scale-105"
             />
-            <span className="hidden font-display text-lg uppercase tracking-tight text-[#111111] sm:inline">
+            <span className="font-display text-lg leading-none tracking-tight">
               My TV-Board
             </span>
           </Link>
 
-          {/* Liens complets : uniquement à partir de tablette */}
-          <div className="hidden items-center gap-2 font-mono-utility text-xs uppercase tracking-wide sm:flex">
-            {links.map((link) => {
-              const active = pathname === link.href;
+          <nav
+            aria-label="Navigation principale"
+            className="hidden items-center gap-1 sm:flex"
+          >
+            {LINKS.map(({ href, label }) => {
+              const active = isActive(href);
               return (
                 <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`manga-btn px-4 py-2 ${
-                    active
-                      ? "bg-[#E1263F] text-white"
-                      : "bg-white text-[#111111]"
+                  key={href}
+                  href={href}
+                  aria-current={active ? "page" : undefined}
+                  className={`relative rounded-[4px] px-3.5 py-2 font-mono text-xs uppercase tracking-wider transition-colors ${
+                    active ? "text-white" : "text-ink-soft hover:text-ink"
                   }`}
                 >
-                  {link.label}
+                  {active && (
+                    <motion.span
+                      layoutId="nav-pill"
+                      transition={SPRING}
+                      className="absolute inset-0 rounded-[4px] bg-ink"
+                    />
+                  )}
+                  <span className="relative">{label}</span>
                 </Link>
               );
             })}
+          </nav>
 
-            {user ? (
-              <button
-                onClick={handleLogout}
-                className="manga-btn bg-white px-4 py-2 text-[#111111]"
-              >
-                Déconnexion
-              </button>
-            ) : (
-              <Link
-                href="/login"
-                className="manga-btn bg-white px-4 py-2 text-[#111111]"
-              >
-                Se connecter
-              </Link>
-            )}
-          </div>
-
-          {/* Sur mobile : juste un bouton compte compact */}
-          <div className="sm:hidden">
-            {user ? (
-              <button
-                onClick={handleLogout}
-                className="manga-btn bg-white px-3 py-1.5 text-[10px] text-[#111111]"
-              >
-                Déconnexion
-              </button>
-            ) : (
-              <Link
-                href="/login"
-                className="manga-btn bg-white px-3 py-1.5 text-[10px] text-[#111111]"
-              >
-                Se connecter
-              </Link>
-            )}
-          </div>
+          <div className="flex items-center">{account}</div>
         </div>
-      </nav>
+      </header>
 
-      {/* Barre de navigation fixée en bas, uniquement sur mobile */}
-      <div className="halftone-bg fixed bottom-0 left-0 right-0 z-50 border-t-4 border-[#111111] sm:hidden">
-        <div className="flex items-stretch justify-around">
-          {links.map((link) => {
-            const active = pathname === link.href;
+      {/* Barre d'onglets fixée en bas, uniquement sur mobile */}
+      <nav
+        aria-label="Navigation principale"
+        className="pb-safe fixed inset-x-0 bottom-0 z-50 border-t-2 border-ink bg-paper/95 backdrop-blur-md sm:hidden"
+      >
+        <div className="flex items-stretch">
+          {LINKS.map(({ href, label, Icon }) => {
+            const active = isActive(href);
             return (
               <Link
-                key={link.href}
-                href={link.href}
-                className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 font-mono-utility text-[10px] uppercase ${
-                  active ? "bg-[#E1263F] text-white" : "text-[#111111]"
+                key={href}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className={`relative flex flex-1 flex-col items-center gap-1 pb-2 pt-2.5 font-mono text-[10px] uppercase tracking-wide transition-colors ${
+                  active ? "text-accent" : "text-ink-soft"
                 }`}
               >
-                <span className="text-lg leading-none">{link.icon}</span>
-                {link.label}
+                {active && (
+                  <motion.span
+                    layoutId="tab-indicator"
+                    transition={SPRING}
+                    className="absolute inset-x-5 top-0 h-[3px] rounded-b-full bg-accent"
+                  />
+                )}
+                <motion.span
+                  animate={{ y: active ? -1 : 0, scale: active ? 1.12 : 1 }}
+                  transition={SPRING}
+                >
+                  <Icon size={20} />
+                </motion.span>
+                {label}
               </Link>
             );
           })}
         </div>
-      </div>
+      </nav>
     </>
   );
 }
