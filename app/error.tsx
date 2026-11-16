@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { AlertIcon } from "@/components/Icons";
 
 export default function Error({
   error,
@@ -14,13 +15,13 @@ export default function Error({
   }, [error]);
 
   return (
-    <main className="px-4 py-20">
-      <div className="panel halftone mx-auto flex max-w-md flex-col items-center px-6 py-10 text-center">
-        <p aria-hidden="true" className="mb-3 font-display text-4xl text-accent">
-          エラー
-        </p>
-        <h1 className="font-display text-xl">Quelque chose a cassé</h1>
-        <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+    <main className="px-4 py-24">
+      <div className="card mx-auto flex max-w-md flex-col items-center px-8 py-12 text-center">
+        <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-danger/10 text-danger">
+          <AlertIcon size={26} />
+        </span>
+        <h1 className="section-title text-[22px]">Un problème est survenu</h1>
+        <p className="mt-2 text-[15px] leading-relaxed text-muted">
           Les données n&apos;ont pas pu être chargées. C&apos;est sans doute
           passager.
         </p>

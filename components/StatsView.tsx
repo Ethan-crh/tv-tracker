@@ -1,18 +1,28 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { motion } from "motion/react";
 import CountUp from "@/components/CountUp";
 import EmptyState, { SignInPrompt } from "@/components/EmptyState";
+import {
+  AlertIcon,
+  ChartIcon,
+  CheckIcon,
+  ClockIcon,
+  FilmIcon,
+  ListIcon,
+} from "@/components/Icons";
 import { Reveal, Stagger, StaggerItem } from "@/components/Reveal";
 import Skeleton from "@/components/Skeleton";
 import { STATUS_LABELS, STATUS_ORDER, type Status } from "@/lib/types";
 import { useLibrary } from "@/lib/useLibrary";
 
+/** Couleurs système, dans l'ordre de STATUS_ORDER. */
 const STATUS_COLORS: Record<Status, string> = {
-  en_cours: "bg-accent",
-  a_voir: "bg-sun",
-  termine: "bg-ink",
-  abandonne: "bg-ink/25",
+  en_cours: "#0071e3",
+  a_voir: "#ff9f0a",
+  termine: "#34c759",
+  abandonne: "#aeaeb2",
 };
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -23,13 +33,13 @@ export default function StatsView() {
   if (library.phase === "loading") {
     return (
       <>
-        <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
           {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="h-28 w-full" />
+            <Skeleton key={i} className="h-[136px] w-full !rounded-[18px]" />
           ))}
         </div>
-        <Skeleton className="mb-8 h-32 w-full" />
-        <Skeleton className="h-64 w-full" />
+        <Skeleton className="mb-5 h-56 w-full !rounded-[28px]" />
+        <Skeleton className="h-72 w-full !rounded-[28px]" />
       </>
     );
   }
@@ -40,7 +50,7 @@ export default function StatsView() {
 
   if (library.phase === "error") {
     return (
-      <EmptyState kana="エラー" title="Chargement impossible">
+      <EmptyState icon={<AlertIcon size={26} />} title="Chargement impossible">
         Tes statistiques n&apos;ont pas pu être calculées. Recharge la page dans
         un instant.
       </EmptyState>
@@ -52,7 +62,7 @@ export default function StatsView() {
   if (entries.length === 0) {
     return (
       <EmptyState
-        kana="ゼロ"
+        icon={<ChartIcon size={26} />}
         title="Pas encore de chiffres"
         action={{ href: "/recherche", label: "Explorer les titres" }}
       >
@@ -91,40 +101,54 @@ export default function StatsView() {
     .slice(0, 6);
   const maxGenre = topGenres[0]?.[1] || 1;
 
-  const cards = [
-    { label: "Titres suivis", value: entries.length },
-    { label: "Épisodes vus", value: episodes },
-    { label: "Films vus", value: movies },
-    { label: "Heures regardées", value: hours },
+  const cards: { label: string; value: number; icon: ReactNode; tint: string }[] = [
+    { label: "Titres suivis", value: entries.length, icon: <ListIcon size={18} />, tint: "bg-[#0071e3]" },
+    { label: "Épisodes vus", value: episodes, icon: <CheckIcon size={16} />, tint: "bg-[#34c759]" },
+    { label: "Films vus", value: movies, icon: <FilmIcon size={18} />, tint: "bg-[#ff9f0a]" },
+    { label: "Heures regardées", value: hours, icon: <ClockIcon size={18} />, tint: "bg-[#a970ff]" },
   ];
 
   return (
-    <div className="flex flex-col gap-8">
-      <Stagger gap={0.08} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div className="flex flex-col gap-5">
+      <Stagger gap={0.08} className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-5">
         {cards.map((card) => (
           <StaggerItem key={card.label}>
-            <div className="panel p-4 sm:p-5">
-              <p className="font-display text-3xl text-accent sm:text-4xl">
+            <div className="card p-5 sm:p-6">
+              <span
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-white ${card.tint}`}
+              >
+                {card.icon}
+              </span>
+              <p className="mt-4 text-[34px] font-semibold leading-none tracking-tight tabular-nums sm:text-[40px]">
                 <CountUp value={card.value} />
               </p>
-              <p className="eyebrow mt-1.5">{card.label}</p>
+              <p className="mt-1.5 text-[14px] text-muted">{card.label}</p>
             </div>
           </StaggerItem>
         ))}
       </Stagger>
 
       <Reveal>
-        <div className="panel panel-lg relative overflow-hidden bg-ink p-6 text-paper sm:p-8">
-          <div className="halftone-light absolute inset-0" />
+        <div className="relative overflow-hidden rounded-[28px] bg-night p-7 text-white sm:p-10">
+          <div
+            aria-hidden="true"
+            className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#2997ff] opacity-30 blur-[90px]"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute -bottom-28 right-24 h-64 w-64 rounded-full bg-[#a970ff] opacity-25 blur-[90px]"
+          />
           <div className="relative">
-            <p className="eyebrow !text-paper/60">Temps total devant l&apos;écran</p>
-            <p className="mt-2 font-display text-4xl leading-none sm:text-6xl">
-              <CountUp value={days} decimals={1} className="text-sun" />{" "}
-              <span className="text-2xl sm:text-3xl">
+            <p className="text-[15px] font-semibold text-white/55">
+              Temps total devant l&apos;écran
+            </p>
+            <p className="headline mt-3 text-[64px] sm:text-[96px]">
+              <CountUp value={days} decimals={1} className="text-gradient" />
+              <span className="ml-3 text-[28px] font-semibold text-white sm:text-[40px]">
                 jour{days >= 2 ? "s" : ""}
               </span>
             </p>
-            <p className="mt-3 max-w-lg text-sm leading-relaxed text-paper/65">
+            <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-white/55">
               Soit {hours.toLocaleString("fr-FR")} heure{hours > 1 ? "s" : ""}.
               Estimation : durée réelle des films vus, et durée typique d&apos;un
               épisode pour chaque série.
@@ -133,33 +157,29 @@ export default function StatsView() {
         </div>
       </Reveal>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2">
         <Reveal>
-          <section className="panel h-full p-5 sm:p-6">
-            <h2 className="mb-5 font-display text-xl">Genres préférés</h2>
+          <section className="card h-full rounded-[28px] p-6 sm:p-8">
+            <h2 className="section-title mb-6 text-[22px]">Genres préférés</h2>
             {topGenres.length === 0 ? (
-              <p className="text-sm text-muted">Pas encore assez de titres.</p>
+              <p className="text-[15px] text-muted">Pas encore assez de titres.</p>
             ) : (
-              <ol className="flex flex-col gap-3.5">
+              <ol className="flex flex-col gap-4">
                 {topGenres.map(([name, count], i) => (
                   <li key={name}>
-                    <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
-                      <span className="font-bold">
-                        <span className="mr-2 font-mono text-xs text-accent">
-                          {String(i + 1).padStart(2, "0")}
-                        </span>
-                        {name}
-                      </span>
-                      <span className="font-mono text-xs text-muted">
+                    <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[15px]">
+                      <span className="font-medium">{name}</span>
+                      <span className="text-[13px] tabular-nums text-muted">
                         {count} titre{count > 1 ? "s" : ""}
                       </span>
                     </div>
-                    <div className="h-3 overflow-hidden rounded-full border border-ink bg-paper">
+                    <div className="h-2 overflow-hidden rounded-full bg-black/[0.06]">
                       <motion.div
-                        className={`h-full ${i === 0 ? "bg-accent" : "bg-ink"}`}
+                        className={`h-full rounded-full ${i === 0 ? "bg-accent" : "bg-accent/45"}`}
                         initial={{ width: 0 }}
-                        animate={{ width: `${(count / maxGenre) * 100}%` }}
-                        transition={{ duration: 0.9, delay: i * 0.08, ease: EASE }}
+                        whileInView={{ width: `${(count / maxGenre) * 100}%` }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1, delay: 0.2 + i * 0.08, ease: EASE }}
                       />
                     </div>
                   </li>
@@ -169,40 +189,78 @@ export default function StatsView() {
           </section>
         </Reveal>
 
-        <Reveal delay={0.1}>
-          <section className="panel h-full p-5 sm:p-6">
-            <h2 className="mb-5 font-display text-xl">Répartition</h2>
-            <div className="flex h-5 overflow-hidden rounded-full border-2 border-ink">
-              {STATUS_ORDER.map((status, i) => {
-                const count = statusTally.get(status) || 0;
-                if (count === 0) return null;
-                return (
-                  <motion.div
-                    key={status}
-                    title={`${STATUS_LABELS[status]} : ${count}`}
-                    className={`${STATUS_COLORS[status]} border-r border-ink last:border-r-0`}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(count / entries.length) * 100}%` }}
-                    transition={{ duration: 0.9, delay: i * 0.1, ease: EASE }}
-                  />
-                );
-              })}
+        <Reveal delay={0.08}>
+          <section className="card h-full rounded-[28px] p-6 sm:p-8">
+            <h2 className="section-title mb-6 text-[22px]">Répartition</h2>
+            <div className="flex flex-col items-center gap-8 sm:flex-row">
+              <StatusDonut tally={statusTally} total={entries.length} />
+              <ul className="grid w-full flex-1 gap-3">
+                {STATUS_ORDER.map((status) => (
+                  <li key={status} className="flex items-center gap-3 text-[15px]">
+                    <span
+                      className="h-3 w-3 shrink-0 rounded-full"
+                      style={{ background: STATUS_COLORS[status] }}
+                    />
+                    <span className="flex-1">{STATUS_LABELS[status]}</span>
+                    <span className="tabular-nums text-muted">
+                      {statusTally.get(status) || 0}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul className="mt-5 grid grid-cols-2 gap-3">
-              {STATUS_ORDER.map((status) => (
-                <li key={status} className="flex items-center gap-2.5 text-sm">
-                  <span
-                    className={`h-3.5 w-3.5 shrink-0 rounded-[3px] border border-ink ${STATUS_COLORS[status]}`}
-                  />
-                  <span className="flex-1">{STATUS_LABELS[status]}</span>
-                  <span className="font-mono text-xs text-muted">
-                    {statusTally.get(status) || 0}
-                  </span>
-                </li>
-              ))}
-            </ul>
           </section>
         </Reveal>
+      </div>
+    </div>
+  );
+}
+
+/** Anneau segmenté façon app Forme. */
+function StatusDonut({ tally, total }: { tally: Map<Status, number>; total: number }) {
+  const radius = 62;
+  const stroke = 18;
+  const circumference = 2 * Math.PI * radius;
+  const gap = 3;
+
+  const segments: { status: Status; start: number; length: number }[] = [];
+  let offset = 0;
+  for (const status of STATUS_ORDER) {
+    const count = tally.get(status) || 0;
+    if (count === 0) continue;
+    const length = (count / total) * circumference;
+    segments.push({ status, start: offset, length: Math.max(length - gap, 1) });
+    offset += length;
+  }
+
+  return (
+    <div className="relative h-[164px] w-[164px] shrink-0">
+      <svg viewBox="0 0 164 164" className="h-full w-full -rotate-90" aria-hidden="true">
+        <circle cx="82" cy="82" r={radius} fill="none" stroke="#0000000a" strokeWidth={stroke} />
+        {segments.map((seg, i) => (
+          <motion.circle
+            key={seg.status}
+            cx="82"
+            cy="82"
+            r={radius}
+            fill="none"
+            stroke={STATUS_COLORS[seg.status]}
+            strokeWidth={stroke}
+            strokeDashoffset={-seg.start}
+            initial={{ strokeDasharray: `0 ${circumference}` }}
+            viewport={{ once: true }}
+            whileInView={{
+              strokeDasharray: `${seg.length} ${circumference - seg.length}`,
+            }}
+            transition={{ duration: 1.1, delay: 0.25 + i * 0.12, ease: EASE }}
+          />
+        ))}
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-[34px] font-semibold leading-none tracking-tight tabular-nums">
+          {total}
+        </span>
+        <span className="mt-1 text-[13px] text-muted">titre{total > 1 ? "s" : ""}</span>
       </div>
     </div>
   );

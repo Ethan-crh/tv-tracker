@@ -483,12 +483,12 @@ export function SeriesStatus() {
   const { signedIn, authLoading, ready, busy, status, changeStatus, seasons, watchedBySeason } =
     useSeries();
 
-  if (authLoading) return <div className="h-10" />;
+  if (authLoading) return <div className="h-[62px]" />;
 
   if (!signedIn) {
     return (
-      <p className="text-sm text-paper/70">
-        <Link href="/login" className="link text-paper">
+      <p className="text-[15px] text-white/70">
+        <Link href="/login" className="text-link-dark hover:underline">
           Connecte-toi
         </Link>{" "}
         pour suivre cette série et cocher tes épisodes.
@@ -510,18 +510,14 @@ export function SeriesStatus() {
       <StatusPicker value={status} onChange={changeStatus} disabled={!ready || busy} />
       {total > 0 && (
         <div className="max-w-md">
-          <div className="mb-1.5 flex items-baseline justify-between font-mono text-[11px] uppercase tracking-wider text-paper/70">
-            <span>Progression</span>
-            <span>
-              <span className="text-paper">{seen}</span> / {total} épisodes ·{" "}
-              {Math.round(percent)} %
+          <div className="mb-2 flex items-baseline justify-between text-[13px] text-white/60">
+            <span className="font-medium">Progression</span>
+            <span className="tabular-nums">
+              <span className="font-semibold text-white">{seen}</span> sur {total}{" "}
+              épisodes · {Math.round(percent)} %
             </span>
           </div>
-          <ProgressBar
-            percent={percent}
-            label="Progression dans la série"
-            className="!border-paper/60 !bg-paper/10"
-          />
+          <ProgressBar percent={percent} label="Progression dans la série" tone="dark" />
         </div>
       )}
     </>
@@ -575,7 +571,7 @@ export function SeasonTracker() {
 
   if (seasons.length === 0 || active === null) {
     return (
-      <p className="text-sm text-muted">
+      <p className="text-[15px] text-muted">
         Aucun épisode n&apos;est encore référencé pour cette série.
       </p>
     );
@@ -585,14 +581,15 @@ export function SeasonTracker() {
 
   return (
     <section>
-      <h2 className="mb-4 font-display text-xl sm:text-2xl">Épisodes</h2>
+      <h2 className="section-title mb-5 text-[28px] sm:text-[32px]">Épisodes</h2>
 
       <div
         role="tablist"
         aria-label="Saisons"
-        className="scrollbar-hide -mx-4 mb-5 flex gap-2 overflow-x-auto px-4 py-1 sm:-mx-6 sm:px-6"
+        className="scrollbar-hide -mx-4 mb-5 flex gap-1.5 overflow-x-auto px-4 py-1 sm:-mx-6 sm:px-6"
       >
         {seasons.map((season) => {
+          const selected = active === season.season_number;
           const seen = Math.min(
             watchedBySeason.get(season.season_number) || 0,
             season.episode_count,
@@ -602,52 +599,62 @@ export function SeasonTracker() {
             <button
               key={season.id}
               role="tab"
-              aria-selected={active === season.season_number}
+              aria-selected={selected}
               onClick={() => setPicked(season.season_number)}
-              className="chip shrink-0"
+              className={`relative z-0 flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-[14px] font-medium transition-colors duration-200 ${
+                selected ? "text-white" : "text-ink/70 hover:bg-black/5 hover:text-ink"
+              }`}
             >
-              {season.name}
-              {signedIn && (
-                <span
-                  className={`rounded-full px-1.5 py-px font-mono text-[10px] ${
-                    complete ? "bg-sun text-ink" : "bg-ink/10"
-                  } ${active === season.season_number && !complete ? "!bg-white/20" : ""}`}
-                >
-                  {complete ? "✓" : `${seen}/${season.episode_count}`}
-                </span>
+              {selected && (
+                <motion.span
+                  layoutId="season-pill"
+                  transition={{ type: "spring", stiffness: 500, damping: 38 }}
+                  className="absolute inset-0 -z-10 rounded-full bg-ink"
+                />
               )}
+              {season.name}
+              {signedIn &&
+                (complete ? (
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-success text-white">
+                    <CheckIcon size={10} />
+                  </span>
+                ) : (
+                  <span className="text-[12px] tabular-nums opacity-60">
+                    {seen}/{season.episode_count}
+                  </span>
+                ))}
             </button>
           );
         })}
       </div>
 
       {signedIn && active > 0 && (
-        <div className="mb-6 flex flex-wrap items-center gap-2.5">
+        <div className="mb-6 flex flex-wrap items-center gap-2">
           <button
             onClick={() => series.markThroughSeason(active)}
             disabled={busy || !ready}
-            className="btn btn-ink"
+            className="btn btn-primary btn-sm"
           >
-            <CheckIcon size={14} />
+            <CheckIcon size={13} />
             {active > 1 ? `Tout vu jusqu'à la saison ${active}` : "Saison vue"}
           </button>
           <button
             onClick={() => series.unmarkFromSeason(active)}
             disabled={busy || !ready}
-            className="btn"
+            className="btn btn-sm"
           >
             Décocher à partir d&apos;ici
           </button>
           <button
             onClick={series.resetAll}
             disabled={busy || !ready || watched.size === 0}
-            className="btn btn-quiet"
+            className="btn btn-plain btn-sm !text-danger"
           >
-            <ResetIcon size={14} />
+            <ResetIcon size={13} />
             Réinitialiser
           </button>
           {busy && (
-            <span role="status" className="font-mono text-xs text-muted">
+            <span role="status" className="text-[13px] text-muted">
               Enregistrement…
             </span>
           )}
@@ -655,13 +662,21 @@ export function SeasonTracker() {
       )}
 
       {!current ? (
-        <div className="flex flex-col gap-3">
+        <div className="card overflow-hidden">
           {Array.from({ length: 5 }, (_, i) => (
-            <Skeleton key={i} className="h-24 w-full" />
+            <div key={i} className="flex gap-4 border-b border-hairline p-4 last:border-b-0">
+              <Skeleton className="h-7 w-7 !rounded-full" />
+              <Skeleton className="hidden aspect-video w-40 sm:block" />
+              <div className="flex-1">
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="mt-2 h-3 w-1/4" />
+                <Skeleton className="mt-3 h-3 w-5/6" />
+              </div>
+            </div>
           ))}
         </div>
       ) : current.failed ? (
-        <p className="panel bg-card p-4 text-sm text-ink-soft">
+        <p className="card p-5 text-[15px] text-muted">
           Impossible de charger cette saison pour le moment. Réessaie dans un
           instant.
         </p>
@@ -671,9 +686,9 @@ export function SeasonTracker() {
             key={active}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col gap-3"
+            exit={{ opacity: 0, transition: { duration: 0.12 } }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="card overflow-hidden"
           >
             {current.episodes.map((ep, i) => (
               <EpisodeRow
@@ -682,6 +697,7 @@ export function SeasonTracker() {
                 index={i}
                 watched={watched.has(episodeKey(active, ep.episode_number))}
                 upcoming={Boolean(today && ep.air_date && ep.air_date > today)}
+                signedIn={signedIn}
                 disabled={!signedIn || !ready || busy}
                 onToggle={() =>
                   series.toggleEpisode(active, ep.episode_number, current.episodes)
@@ -700,6 +716,7 @@ function EpisodeRow({
   index,
   watched,
   upcoming,
+  signedIn,
   disabled,
   onToggle,
 }: {
@@ -707,6 +724,7 @@ function EpisodeRow({
   index: number;
   watched: boolean;
   upcoming: boolean;
+  signedIn: boolean;
   disabled: boolean;
   onToggle: () => void;
 }) {
@@ -717,69 +735,71 @@ function EpisodeRow({
 
   return (
     <motion.li
-      initial={{ opacity: 0, x: -16 }}
-      animate={{ opacity: 1, x: 0 }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
       // Seuls les premiers épisodes arrivent en cascade : au-delà, l'attente
       // serait pénible sur les longues saisons.
-      transition={{ duration: 0.35, delay: Math.min(index, 10) * 0.035 }}
-      className={`flex items-start gap-3 rounded-[4px] border-2 border-ink p-3 transition-colors duration-300 sm:gap-4 ${
-        watched ? "bg-sun/25" : "bg-card"
-      }`}
+      transition={{ duration: 0.4, delay: Math.min(index, 10) * 0.03 }}
+      className="flex items-start gap-3.5 border-b border-hairline px-4 py-4 last:border-b-0 sm:gap-5 sm:px-5"
     >
-      <motion.button
-        role="checkbox"
-        aria-checked={watched}
-        aria-label={`Épisode ${episode.episode_number} vu`}
-        disabled={disabled}
-        onClick={onToggle}
-        whileTap={disabled ? undefined : { scale: 0.85 }}
-        className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] border-2 border-ink transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-          watched ? "bg-accent text-white" : "bg-card hover:bg-sun/40"
-        }`}
-      >
-        <AnimatePresence initial={false}>
-          {watched && (
-            <motion.span
-              initial={{ scale: 0, rotate: -60 }}
-              animate={{ scale: 1, rotate: 0 }}
-              exit={{ scale: 0 }}
-              transition={{ type: "spring", stiffness: 520, damping: 17 }}
-            >
-              <CheckIcon size={18} />
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </motion.button>
+      {/* Coche ronde, façon app Rappels */}
+      {signedIn && (
+        <motion.button
+          role="checkbox"
+          aria-checked={watched}
+          aria-label={`Épisode ${episode.episode_number} vu`}
+          disabled={disabled}
+          onClick={onToggle}
+          whileTap={disabled ? undefined : { scale: 0.85 }}
+          className={`relative mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-[1.5px] transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40 ${
+            watched ? "border-accent" : "border-line hover:border-accent/60"
+          }`}
+        >
+          <AnimatePresence initial={false}>
+            {watched && (
+              <motion.span
+                className="absolute inset-[-1.5px] flex items-center justify-center rounded-full bg-accent text-white"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 520, damping: 22 }}
+              >
+                <CheckIcon size={15} />
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </motion.button>
+      )}
 
       {episode.still_path && (
-        <div className="relative hidden aspect-video w-36 shrink-0 overflow-hidden rounded-[3px] border-2 border-ink bg-paper-deep sm:block">
+        <div className="relative hidden aspect-video w-40 shrink-0 overflow-hidden rounded-[10px] bg-fill sm:block">
           <Image
             src={tmdbImage(episode.still_path, "w300")}
             alt=""
             fill
-            sizes="144px"
-            className={`object-cover transition-[filter] duration-500 ${watched ? "grayscale" : ""}`}
+            sizes="160px"
+            className={`object-cover transition-opacity duration-500 ${watched ? "opacity-60" : ""}`}
           />
         </div>
       )}
 
       <div className="min-w-0 flex-1">
-        <p className="font-bold leading-snug">
-          <span className="mr-2 font-mono text-xs font-medium text-accent">
-            E{String(episode.episode_number).padStart(2, "0")}
+        <p className="text-[16px] font-semibold leading-snug tracking-[-0.015em]">
+          <span className="mr-1.5 font-normal tabular-nums text-muted">
+            {episode.episode_number}.
           </span>
           {episode.name}
         </p>
-        <p className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[11px] text-muted">
+        <p className="mt-1 flex flex-wrap items-center gap-2 text-[13px] text-muted">
           {meta.join(" · ")}
           {upcoming && (
-            <span className="rounded-full border border-ink bg-sun px-1.5 py-px uppercase tracking-wider text-ink">
+            <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-semibold text-accent">
               À venir
             </span>
           )}
         </p>
         {episode.overview && (
-          <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-ink-soft">
+          <p className="mt-1.5 line-clamp-3 text-[14px] leading-relaxed text-ink-soft">
             {episode.overview}
           </p>
         )}

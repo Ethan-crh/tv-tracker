@@ -75,12 +75,12 @@ export default function MovieActions({ movieId }: { movieId: number }) {
     }
   }
 
-  if (loading) return <div className="h-10" />;
+  if (loading) return <div className="h-[62px]" />;
 
   if (!user) {
     return (
-      <p className="text-sm text-paper/70">
-        <Link href="/login" className="link text-paper">
+      <p className="text-[15px] text-white/70">
+        <Link href="/login" className="text-link-dark hover:underline">
           Connecte-toi
         </Link>{" "}
         pour suivre ce film.

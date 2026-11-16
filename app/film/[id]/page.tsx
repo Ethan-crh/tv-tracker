@@ -61,7 +61,7 @@ export default async function FilmPage({ params }: Props) {
         </div>
       </MediaHero>
 
-      <div className="mx-auto flex max-w-6xl flex-col gap-12 overflow-hidden px-4 py-10 sm:px-6 sm:py-14">
+      <div className="mx-auto flex max-w-6xl flex-col gap-14 overflow-hidden px-4 py-12 sm:px-6 sm:py-16">
         <Reveal>
           <CastRow cast={movie.cast} />
         </Reveal>

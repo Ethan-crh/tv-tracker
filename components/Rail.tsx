@@ -41,27 +41,27 @@ export default function Rail({
 
   return (
     <section>
-      <div className="mb-4 flex items-end justify-between gap-4">
+      <div className="mb-3 flex items-end justify-between gap-4">
         <div>
           {eyebrow && <p className="eyebrow mb-1">{eyebrow}</p>}
-          <h2 className="font-display text-xl sm:text-2xl">{title}</h2>
+          <h2 className="section-title text-[22px] sm:text-[28px]">{title}</h2>
         </div>
         <div className="hidden gap-2 sm:flex">
           <button
             onClick={() => scrollBy(-1)}
             disabled={edges.start}
             aria-label={`${title} : défiler vers la gauche`}
-            className="btn !p-2"
+            className="btn btn-icon"
           >
-            <ChevronLeftIcon size={16} />
+            <ChevronLeftIcon size={18} />
           </button>
           <button
             onClick={() => scrollBy(1)}
             disabled={edges.end}
             aria-label={`${title} : défiler vers la droite`}
-            className="btn !p-2"
+            className="btn btn-icon"
           >
-            <ChevronRightIcon size={16} />
+            <ChevronRightIcon size={18} />
           </button>
         </div>
       </div>
@@ -69,7 +69,7 @@ export default function Rail({
       <div
         ref={scroller}
         onScroll={measure}
-        className="scrollbar-hide -mx-4 flex snap-x scroll-px-4 gap-4 overflow-x-auto px-4 pb-3 pt-3 sm:-mx-6 sm:scroll-px-6 sm:px-6"
+        className="scrollbar-hide -mx-4 flex snap-x scroll-px-4 gap-4 overflow-x-auto px-4 pb-8 pt-3 sm:-mx-6 sm:scroll-px-6 sm:gap-5 sm:px-6"
       >
         {children}
       </div>

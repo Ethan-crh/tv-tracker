@@ -6,9 +6,10 @@ import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import EmptyState from "@/components/EmptyState";
-import { CloseIcon, FilterIcon, SearchIcon } from "@/components/Icons";
+import { AlertIcon, CloseIcon, FilterIcon, SearchIcon } from "@/components/Icons";
 import PosterCard, { mediaHref } from "@/components/PosterCard";
 import { Stagger, StaggerItem } from "@/components/Reveal";
+import SegmentedControl from "@/components/SegmentedControl";
 import { PosterGridSkeleton } from "@/components/Skeleton";
 import {
   DISCOVER_TYPES,
@@ -30,7 +31,7 @@ type Loaded = {
 };
 
 const GRID =
-  "grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5";
+  "grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-5 md:grid-cols-4 lg:grid-cols-5";
 
 /**
  * Recherche + filtres. L'état vit dans l'URL (?q=… ou ?type=…&genres=…) :
@@ -139,22 +140,22 @@ export default function SearchExperience({ children }: { children: ReactNode }) 
           children
         ) : (
           <section aria-live="polite" aria-busy={!current}>
-            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p className="eyebrow mb-1">{q ? "Recherche" : "Filtres"}</p>
-                <h2 className="font-display text-xl sm:text-2xl">
+                <h2 className="section-title text-[24px] sm:text-[32px]">
                   {q
                     ? `« ${current?.correctedTo || q} »`
                     : DISCOVER_TYPES.find((t) => t.value === type)?.label}
                   {current && !current.error && (
-                    <span className="ml-2 font-mono text-sm text-muted">
+                    <span className="ml-2.5 text-[15px] font-normal tracking-normal text-muted">
                       {current.results.length} résultat
                       {current.results.length > 1 ? "s" : ""}
                     </span>
                   )}
                 </h2>
                 {current?.correctedTo && (
-                  <p className="mt-1 text-sm text-ink-soft">
+                  <p className="mt-1.5 text-[15px] text-muted">
                     Aucun résultat pour « {q} » — résultats pour{" "}
                     <strong>{current.correctedTo}</strong>.
                   </p>
@@ -162,9 +163,9 @@ export default function SearchExperience({ children }: { children: ReactNode }) 
               </div>
               <button
                 onClick={() => navigate(new URLSearchParams())}
-                className="btn btn-quiet"
+                className="btn btn-sm"
               >
-                <CloseIcon size={14} />
+                <CloseIcon size={13} />
                 Effacer
               </button>
             </div>
@@ -172,11 +173,11 @@ export default function SearchExperience({ children }: { children: ReactNode }) 
             {!current ? (
               <PosterGridSkeleton />
             ) : current.error ? (
-              <EmptyState kana="エラー" title="Oups">
+              <EmptyState icon={<AlertIcon size={26} />} title="Oups">
                 {current.error}
               </EmptyState>
             ) : current.results.length === 0 ? (
-              <EmptyState kana="なし" title="Aucun résultat">
+              <EmptyState icon={<SearchIcon size={26} />} title="Aucun résultat">
                 {q
                   ? "Vérifie l'orthographe ou essaie un autre titre."
                   : "Aucun titre ne correspond à ces filtres."}
@@ -287,12 +288,12 @@ function SearchBar({
           setOpen(false);
           onSearch(trimmed);
         }}
-        className="flex flex-col gap-2.5 sm:flex-row"
+        className="flex flex-col gap-3 sm:flex-row"
       >
         <div className="relative flex-1">
           <SearchIcon
-            size={18}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted"
+            size={19}
+            className="pointer-events-none absolute left-[1.1rem] top-1/2 -translate-y-1/2 text-faint"
           />
           <input
             type="search"
@@ -312,10 +313,10 @@ function SearchBar({
             aria-controls={listId}
             aria-autocomplete="list"
             autoComplete="off"
-            className="field !pl-10"
+            className="field field-search"
           />
         </div>
-        <div className="flex gap-2.5">
+        <div className="flex gap-3">
           <button type="submit" className="btn btn-lg btn-primary flex-1 sm:flex-none">
             Rechercher
           </button>
@@ -323,9 +324,9 @@ function SearchBar({
             type="button"
             onClick={onToggleFilters}
             aria-expanded={filtersOpen}
-            className={`btn btn-lg flex-1 sm:flex-none ${filtersOpen || filtersActive ? "btn-ink" : ""}`}
+            className={`btn btn-lg flex-1 sm:flex-none ${filtersOpen || filtersActive ? "btn-dark" : "bg-card shadow-card"}`}
           >
-            <FilterIcon size={16} />
+            <FilterIcon size={17} />
             Filtres
           </button>
         </div>
@@ -340,7 +341,7 @@ function SearchBar({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="panel absolute inset-x-0 top-full z-40 mt-2 origin-top overflow-hidden sm:right-auto sm:w-[min(100%,32rem)]"
+            className="glass absolute inset-x-0 top-full z-40 mt-2 origin-top overflow-hidden rounded-2xl p-1.5 shadow-float ring-1 ring-black/5 sm:right-auto sm:w-[min(100%,32rem)]"
           >
             {items.map((item, i) => (
               <li key={`${item.media_type}-${item.id}`} role="option" aria-selected={i === highlighted}>
@@ -348,11 +349,11 @@ function SearchBar({
                   href={mediaHref(item)}
                   onClick={() => setOpen(false)}
                   onMouseEnter={() => setHighlighted(i)}
-                  className={`flex items-center gap-3 px-3 py-2 transition-colors ${
-                    i === highlighted ? "bg-sun/40" : ""
+                  className={`flex items-center gap-3 rounded-xl px-2.5 py-2 transition-colors ${
+                    i === highlighted ? "bg-black/[0.06]" : ""
                   }`}
                 >
-                  <span className="relative h-14 w-[38px] shrink-0 overflow-hidden rounded-[3px] border border-ink bg-paper-deep">
+                  <span className="relative h-14 w-[38px] shrink-0 overflow-hidden rounded-md bg-fill">
                     {item.poster_path && (
                       <Image
                         src={tmdbImage(item.poster_path, "w92")}
@@ -364,10 +365,10 @@ function SearchBar({
                     )}
                   </span>
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-bold">
+                    <span className="block truncate text-[15px] font-medium">
                       {item.title}
                     </span>
-                    <span className="block text-xs text-muted">
+                    <span className="block text-[13px] text-muted">
                       {[KIND_LABELS[item.kind], item.year]
                         .filter(Boolean)
                         .join(" · ")}
@@ -413,32 +414,24 @@ function FilterPanel({
   }
 
   return (
-    // La marge laisse la place à l'ombre portée du panneau.
-    <div className="pb-2 pr-2 pt-5">
-      <div className="panel flex flex-col gap-5 p-5">
-        <fieldset>
-          <legend className="eyebrow mb-2">Type</legend>
-          <div className="flex flex-wrap gap-2">
-            {DISCOVER_TYPES.map((t) => (
-              <button
-                key={t.value}
-                type="button"
-                aria-pressed={type === t.value}
-                onClick={() => {
-                  setType(t.value);
-                  // Les genres ne sont pas les mêmes entre films et séries.
-                  setGenres([]);
-                }}
-                className="chip"
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+    <div className="pt-5">
+      <div className="card flex flex-col gap-6 rounded-3xl p-5 sm:p-7">
+        <div>
+          <p className="mb-2.5 text-[13px] font-semibold text-muted">Type</p>
+          <SegmentedControl
+            label="Type"
+            value={type}
+            onChange={(next) => {
+              setType(next);
+              // Les genres ne sont pas les mêmes entre films et séries.
+              setGenres([]);
+            }}
+            options={DISCOVER_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+          />
+        </div>
 
         <fieldset>
-          <legend className="eyebrow mb-2">Genres</legend>
+          <legend className="mb-2.5 text-[13px] font-semibold text-muted">Genres</legend>
           <div className="flex flex-wrap gap-2">
             {genreOptions.map((g) => (
               <button
@@ -454,28 +447,23 @@ function FilterPanel({
           </div>
         </fieldset>
 
-        <fieldset>
-          <legend className="eyebrow mb-2">Trier par</legend>
-          <div className="flex flex-wrap gap-2">
-            {SORT_OPTIONS.map((s) => (
-              <button
-                key={s.value}
-                type="button"
-                aria-pressed={sort === s.value}
-                onClick={() => setSort(s.value)}
-                className="chip"
-              >
-                {s.label}
-              </button>
-            ))}
+        <div>
+          <p className="mb-2.5 text-[13px] font-semibold text-muted">Trier par</p>
+          <div className="scrollbar-hide -mx-1 overflow-x-auto px-1">
+            <SegmentedControl
+              label="Trier par"
+              value={sort}
+              onChange={setSort}
+              options={SORT_OPTIONS.map((s) => ({ value: s.value, label: s.label }))}
+            />
           </div>
-        </fieldset>
+        </div>
 
         <div>
           <button
             type="button"
             onClick={() => onApply({ type, genres, sort })}
-            className="btn btn-lg btn-ink"
+            className="btn btn-primary btn-lg"
           >
             Afficher les résultats
           </button>

@@ -105,7 +105,7 @@ export const LogoutIcon = (p: IconProps) => (
 export const UserIcon = (p: IconProps) => (
   <Icon {...p}>
     <circle cx="12" cy="8" r="4" />
-    <path d="M4 21c1.5-4 4.5-6 8-6s6.500 2 8 6" />
+    <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
   </Icon>
 );
 
@@ -139,6 +139,19 @@ export const AlertIcon = (p: IconProps) => (
 
 export const ResetIcon = (p: IconProps) => (
   <Icon {...p}>
-    <path d="M4 12a8 8 0 1 0 2.5-5.800M4 4v5h5" />
+    <path d="M4 12a8 8 0 1 0 2.5-5.8M4 4v5h5" />
+  </Icon>
+);
+
+export const MailIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3" y="5" width="18" height="14" rx="2.5" />
+    <path d="m4 7 8 6 8-6" />
+  </Icon>
+);
+
+export const SparkIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6" />
   </Icon>
 );

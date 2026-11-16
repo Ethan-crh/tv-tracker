@@ -1,45 +1,15 @@
-import Link from "next/link";
+import FeatureBento from "@/components/FeatureBento";
 import HomeHero from "@/components/HomeHero";
-import Marquee from "@/components/Marquee";
 import PosterRail from "@/components/PosterRail";
-import { Reveal, Stagger, StaggerItem } from "@/components/Reveal";
-import {
-  ArrowRightIcon,
-  CalendarIcon,
-  ChartIcon,
-  CheckIcon,
-} from "@/components/Icons";
+import { Reveal } from "@/components/Reveal";
+import ScrollHighlight from "@/components/ScrollHighlight";
 import { getBackdrops, getTopItems } from "@/lib/tmdb";
 
 // Page statique, régénérée au plus une fois par heure.
 export const revalidate = 3600;
 
-const FEATURES = [
-  {
-    href: "/mes-listes",
-    Icon: CheckIcon,
-    kana: "01",
-    title: "Coche, épisode par épisode",
-    text: "Marque ce que tu as vu, saison par saison, et reprends exactement là où tu t'étais arrêté.",
-    accent: "bg-accent text-white",
-  },
-  {
-    href: "/calendrier",
-    Icon: CalendarIcon,
-    kana: "02",
-    title: "Ne rate plus une sortie",
-    text: "Le prochain épisode de tes séries en cours et les films qui arrivent au cinéma, au même endroit.",
-    accent: "bg-sun",
-  },
-  {
-    href: "/statistiques",
-    Icon: ChartIcon,
-    kana: "03",
-    title: "Tes chiffres, sans tricher",
-    text: "Heures regardées, épisodes vus, genres préférés : le bilan honnête de ton temps d'écran.",
-    accent: "bg-ink text-white",
-  },
-];
+const STATEMENT =
+  "Fini de chercher où tu t'étais arrêté. Chaque épisode coché, chaque sortie à venir, chaque heure passée devant l'écran : tout est là, au même endroit.";
 
 export default async function Home() {
   const [backdrops, films, animes] = await Promise.all([
@@ -51,70 +21,33 @@ export default async function Home() {
   return (
     <main>
       <HomeHero backdrops={backdrops} />
-      <Marquee
-        words={["Films", "Séries", "Animes", "つづく", "Calendrier", "Statistiques"]}
-      />
 
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-        <Reveal>
-          <p className="eyebrow mb-2">Comment ça marche</p>
-          <h2 className="max-w-xl font-display text-2xl leading-tight sm:text-4xl">
-            Tout ton suivi, en trois cases.
+      <section className="mx-auto max-w-5xl px-5 py-28 sm:px-6 sm:py-40">
+        <ScrollHighlight
+          text={STATEMENT}
+          className="text-[30px] font-semibold leading-[1.15] tracking-[-0.025em] sm:text-[48px] lg:text-[56px]"
+        />
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 sm:px-6">
+        <Reveal className="mb-10 text-center sm:mb-14">
+          <p className="eyebrow mb-3">Fonctionnalités</p>
+          <h2 className="headline text-[36px] sm:text-[56px]">
+            Pensé pour ceux
+            <br />
+            qui regardent tout.
           </h2>
         </Reveal>
-
-        <Stagger gap={0.12} className="mt-10 grid gap-6 md:grid-cols-3">
-          {FEATURES.map(({ href, Icon, kana, title, text, accent }) => (
-            <StaggerItem key={href}>
-              <Link
-                href={href}
-                className="panel group relative flex h-full flex-col overflow-hidden p-6 transition-[transform,box-shadow] duration-300 ease-out-expo hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg"
-              >
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute -right-2 -top-6 font-display text-[7rem] leading-none text-ink/[0.06] transition-transform duration-500 ease-out-expo group-hover:-rotate-6 group-hover:scale-110"
-                >
-                  {kana}
-                </span>
-                <span
-                  className={`mb-5 flex h-11 w-11 items-center justify-center rounded-[4px] border-2 border-ink ${accent}`}
-                >
-                  <Icon size={20} />
-                </span>
-                <h3 className="font-display text-lg leading-snug">{title}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-ink-soft">
-                  {text}
-                </p>
-                <span className="mt-5 flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-accent">
-                  Ouvrir
-                  <ArrowRightIcon
-                    size={14}
-                    className="transition-transform duration-300 group-hover:translate-x-1"
-                  />
-                </span>
-              </Link>
-            </StaggerItem>
-          ))}
-        </Stagger>
+        <FeatureBento />
       </section>
 
       {(films.length > 0 || animes.length > 0) && (
-        <section className="mx-auto flex max-w-6xl flex-col gap-12 overflow-hidden px-4 sm:px-6">
+        <section className="mx-auto mt-24 flex max-w-6xl flex-col gap-10 overflow-hidden px-4 sm:mt-32 sm:px-6">
           <Reveal>
-            <PosterRail
-              eyebrow="En ce moment"
-              title="Top films"
-              items={films}
-              ranked
-            />
+            <PosterRail eyebrow="Tendances" title="Top films" items={films} ranked />
           </Reveal>
           <Reveal>
-            <PosterRail
-              eyebrow="En ce moment"
-              title="Top animes"
-              items={animes}
-              ranked
-            />
+            <PosterRail eyebrow="Tendances" title="Top animes" items={animes} ranked />
           </Reveal>
         </section>
       )}

@@ -13,20 +13,20 @@ export default function TrailerModal({ trailer }: { trailer: Video | null }) {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="btn btn-sun">
-        <PlayIcon size={14} />
+      <button onClick={() => setOpen(true)} className="btn btn-light btn-lg">
+        <PlayIcon size={15} />
         Bande-annonce
       </button>
 
-      <Modal open={open} onClose={close} label="Bande-annonce" className="max-w-4xl p-2 sm:p-3">
+      <Modal open={open} onClose={close} label="Bande-annonce" dark className="max-w-5xl">
         <button
           onClick={close}
           aria-label="Fermer la bande-annonce"
-          className="btn btn-primary absolute -right-3 -top-3 z-10 !p-2"
+          className="btn btn-glass btn-icon absolute -top-12 right-0"
         >
-          <CloseIcon size={16} />
+          <CloseIcon size={18} />
         </button>
-        <div className="aspect-video w-full overflow-hidden rounded-[2px] bg-ink">
+        <div className="aspect-video w-full overflow-hidden rounded-[22px]">
           <iframe
             src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(trailer.key)}?autoplay=1`}
             title="Bande-annonce"

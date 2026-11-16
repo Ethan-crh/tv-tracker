@@ -45,16 +45,16 @@ export function useConfirm() {
       open={open}
       onClose={cancel}
       label={options?.title || "Confirmation"}
-      className="max-w-md p-6"
+      className="max-w-[420px] p-6 sm:p-7"
     >
       {options && (
         <>
-          <h3 className="mb-2 font-display text-xl">{options.title}</h3>
-          <p className="mb-6 text-sm leading-relaxed text-ink-soft">
+          <h3 className="section-title text-[19px]">{options.title}</h3>
+          <p className="mt-2 text-[15px] leading-relaxed text-muted">
             {options.message}
           </p>
-          <div className="flex flex-wrap justify-end gap-2.5">
-            <button onClick={cancel} className="btn btn-quiet">
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button onClick={cancel} className="btn">
               {options.cancelLabel || "Annuler"}
             </button>
             {options.alternativeLabel && (
@@ -64,7 +64,7 @@ export function useConfirm() {
             )}
             <button
               onClick={() => settle("confirm")}
-              className={`btn ${options.danger ? "btn-primary" : "btn-ink"}`}
+              className={`btn ${options.danger ? "btn-danger" : "btn-primary"}`}
             >
               {options.confirmLabel || "Confirmer"}
             </button>

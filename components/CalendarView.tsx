@@ -92,13 +92,13 @@ export default function CalendarView({ movies }: { movies: UpcomingMovie[] }) {
     }));
 
   return (
-    <div className="grid gap-12 lg:grid-cols-2 lg:gap-10">
+    <div className="grid gap-14 lg:grid-cols-2 lg:gap-10">
       <CalendarColumn title="Mes séries en cours" eyebrow="Prochains épisodes">
         {authLoading || (userId && shows.phase === "loading") ? (
           <TimelineSkeleton />
         ) : !userId ? (
           <Note>
-            <Link href="/login" className="link font-bold">
+            <Link href="/login" className="link font-medium">
               Connecte-toi
             </Link>{" "}
             pour voir les prochains épisodes des séries que tu suis.
@@ -138,25 +138,28 @@ function CalendarColumn({
   return (
     <section>
       <p className="eyebrow mb-1">{eyebrow}</p>
-      <h2 className="mb-6 font-display text-xl sm:text-2xl">{title}</h2>
+      <h2 className="section-title mb-6 text-[24px] sm:text-[28px]">{title}</h2>
       {children}
     </section>
   );
 }
 
 function Note({ children }: { children: ReactNode }) {
-  return (
-    <p className="panel halftone p-5 text-sm leading-relaxed text-ink-soft">
-      {children}
-    </p>
-  );
+  return <p className="card p-5 text-[15px] leading-relaxed text-muted">{children}</p>;
 }
 
 function TimelineSkeleton() {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="card overflow-hidden">
       {Array.from({ length: 4 }, (_, i) => (
-        <Skeleton key={i} className="h-[92px] w-full" />
+        <div key={i} className="flex items-center gap-4 border-b border-hairline p-4 last:border-b-0">
+          <Skeleton className="h-14 w-14 !rounded-xl" />
+          <Skeleton className="h-[60px] w-10 !rounded-md" />
+          <div className="flex-1">
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="mt-2 h-3 w-1/3" />
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -177,13 +180,12 @@ function Timeline({ items, today }: { items: CalendarItem[]; today: string | nul
     <div className="flex flex-col gap-8">
       {months.map((month) => (
         <div key={month.label}>
-          <h3 className="mb-3 flex items-center gap-3 font-mono text-xs uppercase tracking-widest text-muted">
+          <h3 className="mb-2.5 px-1 text-[13px] font-semibold text-muted">
             {month.label}
-            <span className="h-px flex-1 bg-ink/15" />
           </h3>
-          <Stagger className="flex flex-col gap-3">
+          <Stagger className="card overflow-hidden">
             {month.items.map((item) => (
-              <StaggerItem key={item.key}>
+              <StaggerItem key={item.key} className="border-b border-hairline last:border-b-0">
                 <TimelineRow item={item} today={today} />
               </StaggerItem>
             ))}
@@ -198,41 +200,44 @@ function TimelineRow({ item, today }: { item: CalendarItem; today: string | null
   const date = parseDay(item.date);
   const relative = today ? relativeDay(today, item.date) : null;
   const soon = relative === "Aujourd'hui" || relative === "Demain";
+  const weekday = date
+    .toLocaleDateString("fr-FR", { weekday: "short" })
+    .replace(".", "");
 
   return (
     <Link
       href={mediaHref(item)}
-      className="panel group flex items-center gap-4 p-3 transition-[transform,box-shadow] duration-300 ease-out-expo hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg"
+      className="group flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-black/[0.025]"
     >
-      <div
-        className={`flex h-[68px] w-14 shrink-0 flex-col items-center justify-center rounded-[4px] border-2 border-ink ${
-          soon ? "bg-accent text-white" : "bg-sun"
-        }`}
-      >
-        <span className="font-display text-2xl leading-none">{date.getDate()}</span>
-        <span className="mt-1 font-mono text-[10px] uppercase tracking-wider">
-          {date.toLocaleDateString("fr-FR", { month: "short" }).replace(".", "")}
+      {/* Icône façon app Calendrier */}
+      <div className="flex h-14 w-14 shrink-0 flex-col items-center rounded-xl bg-card pt-1.5 shadow-[0_1px_4px_rgb(0_0_0/0.14)] ring-1 ring-black/[0.04]">
+        <span className="text-[10px] font-semibold uppercase leading-none text-[#ff3b30]">
+          {weekday}
+        </span>
+        <span className="mt-0.5 text-[27px] font-light leading-none tracking-tight tabular-nums">
+          {date.getDate()}
         </span>
       </div>
 
-      <Poster path={item.poster_path} alt={item.title} sizes="46px" className="w-[46px] shrink-0" />
+      <Poster
+        path={item.poster_path}
+        alt={item.title}
+        sizes="40px"
+        className="w-10 shrink-0 !rounded-md"
+      />
 
       <div className="min-w-0 flex-1">
-        <p className="truncate font-bold transition-colors group-hover:text-accent">
-          {item.title}
-        </p>
+        <p className="truncate text-[15px] font-semibold tracking-[-0.01em]">{item.title}</p>
         {item.detail && (
-          <p className="truncate text-sm text-ink-soft">{item.detail}</p>
+          <p className="truncate text-[14px] text-ink-soft">{item.detail}</p>
         )}
-        <p className="mt-0.5 font-mono text-[11px] text-muted">
-          {formatLongDay(item.date)}
-        </p>
+        <p className="mt-0.5 text-[13px] text-muted">{formatLongDay(item.date)}</p>
       </div>
 
       {relative && (
         <span
-          className={`hidden shrink-0 rounded-full border-2 border-ink px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-wider sm:block ${
-            soon ? "bg-ink text-white" : "bg-card"
+          className={`hidden shrink-0 rounded-full px-2.5 py-1 text-[12px] font-medium sm:block ${
+            soon ? "bg-accent text-white" : "bg-black/[0.05] text-ink-soft"
           }`}
         >
           {relative}

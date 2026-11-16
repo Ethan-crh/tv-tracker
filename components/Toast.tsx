@@ -22,7 +22,7 @@ type ToastApi = {
 
 const ToastContext = createContext<ToastApi | null>(null);
 
-const DURATION_MS = 3600;
+const DURATION_MS = 3200;
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -49,7 +49,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-20 z-[120] flex flex-col items-center gap-2 px-4 sm:bottom-6"
+        className="pointer-events-none fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-[120] flex flex-col items-center gap-2 px-4 sm:bottom-8"
       >
         <AnimatePresence>
           {toasts.map((toast) => (
@@ -57,19 +57,23 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               key={toast.id}
               layout
               role="status"
-              initial={{ opacity: 0, y: 24, scale: 0.92, rotate: -2 }}
-              animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
-              exit={{ opacity: 0, y: 12, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 420, damping: 28 }}
-              className={`panel pointer-events-auto flex max-w-sm items-center gap-2.5 px-4 py-2.5 text-sm font-medium ${
-                toast.kind === "error" ? "bg-accent text-white" : "bg-sun"
-              }`}
+              initial={{ opacity: 0, y: 20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.94, transition: { duration: 0.18 } }}
+              transition={{ type: "spring", stiffness: 420, damping: 30 }}
+              className="glass-dark pointer-events-auto flex max-w-sm items-center gap-2.5 rounded-full py-2.5 pl-2.5 pr-4 text-[14px] font-medium text-white shadow-float"
             >
-              {toast.kind === "error" ? (
-                <AlertIcon size={18} className="shrink-0" />
-              ) : (
-                <CheckIcon size={18} className="shrink-0" />
-              )}
+              <span
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                  toast.kind === "error" ? "bg-[#ff453a]" : "bg-success"
+                }`}
+              >
+                {toast.kind === "error" ? (
+                  <AlertIcon size={13} strokeWidth={2.6} />
+                ) : (
+                  <CheckIcon size={13} />
+                )}
+              </span>
               {toast.message}
             </motion.div>
           ))}

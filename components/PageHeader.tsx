@@ -10,14 +10,11 @@ export default function PageHeader({
   children?: ReactNode;
 }) {
   return (
-    <header className="mb-8 sm:mb-10">
-      <p className="eyebrow mb-2 flex items-center gap-2">
-        <span className="inline-block h-[3px] w-6 bg-accent" />
-        {eyebrow}
-      </p>
-      <h1 className="font-display text-3xl leading-tight sm:text-4xl">{title}</h1>
+    <header className="mb-10 sm:mb-14">
+      <p className="eyebrow mb-2">{eyebrow}</p>
+      <h1 className="headline text-[40px] sm:text-[56px]">{title}</h1>
       {children && (
-        <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-soft sm:text-base">
+        <p className="mt-3 max-w-2xl text-[17px] leading-snug text-muted sm:text-[21px]">
           {children}
         </p>
       )}

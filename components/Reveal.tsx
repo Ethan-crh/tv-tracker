@@ -18,10 +18,10 @@ export function Reveal({
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.6, ease: EASE, delay }}
+      transition={{ duration: 0.9, ease: EASE, delay }}
     >
       {children}
     </motion.div>
@@ -32,7 +32,7 @@ export function Reveal({
 export function Stagger({
   children,
   className,
-  gap = 0.045,
+  gap = 0.05,
 }: {
   children: ReactNode;
   className?: string;
@@ -62,8 +62,8 @@ export function StaggerItem({
     <motion.div
       className={className}
       variants={{
-        hidden: { opacity: 0, y: 22 },
-        show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } },
+        hidden: { opacity: 0, y: 24 },
+        show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } },
       }}
     >
       {children}

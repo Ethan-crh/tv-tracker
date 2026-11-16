@@ -1,30 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import {
-  RocknRoll_One,
-  Zen_Kaku_Gothic_New,
-  IBM_Plex_Mono,
-} from "next/font/google";
+import { Inter } from "next/font/google";
 import Providers from "@/components/Providers";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import "./globals.css";
 
-const display = RocknRoll_One({
-  weight: "400",
+// Inter sert de repli là où SF Pro (police système Apple) n'existe pas.
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--ff-display",
-});
-
-const body = Zen_Kaku_Gothic_New({
-  weight: ["400", "500", "700"],
-  subsets: ["latin"],
-  variable: "--ff-body",
-});
-
-const mono = IBM_Plex_Mono({
-  weight: ["400", "500"],
-  subsets: ["latin"],
-  variable: "--ff-mono",
+  variable: "--ff-inter",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -40,13 +25,13 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "Couzan-desu",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#E1263F",
+  themeColor: "#f5f5f7",
   viewportFit: "cover",
 };
 
@@ -59,15 +44,15 @@ export default function RootLayout({
     // suppressHydrationWarning : certaines extensions de navigateur ajoutent
     // des attributs à <html> avant l'hydratation. Ne concerne que cette balise.
     <html lang="fr" suppressHydrationWarning>
-      <body
-        className={`${display.variable} ${body.variable} ${mono.variable} flex min-h-dvh flex-col antialiased`}
-      >
+      <body className={`${inter.variable} flex min-h-dvh flex-col antialiased`}>
         <Providers>
           <Navbar />
           <div className="flex-1">{children}</div>
           <Footer />
           {/* Réserve la place de la barre d'onglets mobile */}
-          <div className="h-16 bg-ink pb-safe sm:hidden" />
+          <div className="pb-safe sm:hidden">
+            <div className="h-[52px]" />
+          </div>
         </Providers>
       </body>
     </html>

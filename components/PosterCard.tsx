@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { StarIcon } from "@/components/Icons";
+import { formatRating } from "@/lib/format";
 import { tmdbImage } from "@/lib/images";
 import { KIND_LABELS, type MediaCard } from "@/lib/types";
 
@@ -8,7 +9,7 @@ export function mediaHref(item: { media_type: "movie" | "tv"; id: number }) {
   return item.media_type === "tv" ? `/serie/${item.id}` : `/film/${item.id}`;
 }
 
-/** Affiche seule, avec le survol « case de manga ». */
+/** Affiche seule, ou un dégradé avec le titre si elle manque. */
 export function Poster({
   path,
   alt,
@@ -23,9 +24,7 @@ export function Poster({
   className?: string;
 }) {
   return (
-    <div
-      className={`relative aspect-[2/3] overflow-hidden rounded-[4px] border-2 border-ink bg-paper-deep ${className}`}
-    >
+    <div className={`relative aspect-[2/3] overflow-hidden rounded-xl bg-fill ${className}`}>
       {path ? (
         <Image
           src={tmdbImage(path, "w342")}
@@ -33,10 +32,10 @@ export function Poster({
           fill
           sizes={sizes}
           preload={preload}
-          className="object-cover transition-transform duration-500 ease-out-expo group-hover:scale-[1.06]"
+          className="object-cover"
         />
       ) : (
-        <div className="halftone flex h-full items-center justify-center p-3 text-center font-display text-sm text-muted">
+        <div className="flex h-full items-center justify-center bg-gradient-to-b from-[#e8e8ed] to-[#d2d2d7] p-3 text-center text-[13px] font-medium text-muted">
           {alt}
         </div>
       )}
@@ -49,42 +48,35 @@ export default function PosterCard({
   rank,
   subtitle,
   sizes = "(min-width: 1024px) 200px, (min-width: 640px) 25vw, 45vw",
-  children,
 }: {
   item: MediaCard;
   rank?: number;
   subtitle?: string;
   sizes?: string;
-  children?: React.ReactNode;
 }) {
   const meta =
     subtitle ??
     [KIND_LABELS[item.kind], item.year].filter(Boolean).join(" · ");
 
   return (
-    <Link href={mediaHref(item)} className="group relative block">
-      <div className="relative transition-[transform,filter] duration-300 ease-out-expo group-hover:-translate-x-1 group-hover:-translate-y-1 group-hover:drop-shadow-[5px_5px_0_#111111]">
+    <Link href={mediaHref(item)} className="group block rounded-xl">
+      <div className="relative rounded-xl shadow-poster transition-[transform,box-shadow] duration-500 ease-apple group-hover:-translate-y-1 group-hover:scale-[1.03] group-hover:shadow-lift group-active:scale-[0.99]">
         <Poster path={item.poster_path} alt={item.title} sizes={sizes} />
-
-        {rank !== undefined && (
-          <span className="absolute -left-2 -top-2 flex h-8 min-w-8 items-center justify-center rounded-[4px] border-2 border-ink bg-accent px-1 font-display text-sm text-white shadow-hard-sm">
-            {rank}
-          </span>
-        )}
-
         {item.vote_average > 0 && (
-          <span className="absolute right-1.5 top-1.5 flex items-center gap-1 rounded-full border-2 border-ink bg-sun px-1.5 py-0.5 text-[11px] font-bold leading-none">
-            <StarIcon size={10} />
-            {item.vote_average.toFixed(1)}
+          <span className="glass-dark absolute right-2 top-2 flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold text-white">
+            <StarIcon size={10} className="text-star" />
+            {formatRating(item.vote_average)}
           </span>
         )}
       </div>
 
-      <p className="mt-2.5 line-clamp-2 text-sm font-bold leading-snug transition-colors group-hover:text-accent">
+      <p className="mt-3 line-clamp-2 text-[14px] font-medium leading-snug tracking-[-0.01em]">
+        {rank !== undefined && (
+          <span className="mr-1.5 font-semibold tabular-nums text-faint">{rank}</span>
+        )}
         {item.title}
       </p>
-      {meta && <p className="mt-0.5 text-xs text-muted">{meta}</p>}
-      {children}
+      {meta && <p className="mt-0.5 text-[13px] text-muted">{meta}</p>}
     </Link>
   );
 }

@@ -21,7 +21,7 @@ export default async function RecherchePage() {
   ]);
 
   return (
-    <main className="mx-auto max-w-6xl overflow-hidden px-4 py-8 sm:px-6 sm:py-12">
+    <main className="mx-auto max-w-6xl overflow-hidden px-4 py-12 sm:px-6 sm:py-20">
       <PageHeader eyebrow="Explorer" title="Qu'est-ce qu'on regarde ?">
         Cherche un titre précis — les abréviations comme « jjk » ou « snk »
         fonctionnent — ou explore par genre.
@@ -30,7 +30,7 @@ export default async function RecherchePage() {
       {/* useSearchParams impose une frontière Suspense sur une page statique */}
       <Suspense fallback={<PosterGridSkeleton />}>
         <SearchExperience>
-          <div className="flex flex-col gap-12">
+          <div className="flex flex-col gap-10">
             <PosterRail eyebrow="En ce moment" title="Top films" items={films} ranked />
             <PosterRail eyebrow="En ce moment" title="Top animes" items={animes} ranked />
             <PosterRail eyebrow="En ce moment" title="Top séries" items={series} ranked />

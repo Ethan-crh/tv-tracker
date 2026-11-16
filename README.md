@@ -22,7 +22,17 @@ npm run dev
 | `components/` | Interface. `AuthProvider` partage la session, `SeriesTracker` porte toute la logique de suivi d'une série. |
 | `lib/tmdb.ts` | Unique point d'accès à TMDB (serveur uniquement). |
 | `lib/library.ts` | Lecture paginée des données Supabase de l'utilisateur. |
-| `app/globals.css` | Design tokens (couleurs, polices, ombres) et classes `.btn`, `.panel`, `.chip`, `.field`. |
+| `app/globals.css` | Design tokens (couleurs, ombres, courbes d'animation) et classes `.btn`, `.card`, `.glass`, `.chip`, `.field`. |
+
+## Charte graphique
+
+Inspirée d'Apple : fond `#f5f5f7`, texte `#1d1d1f`, accent bleu `#0071e3`,
+boutons en pilule, cartes très arrondies sans bordure, barres translucides
+floutées et en-têtes sombres plein cadre sur les fiches.
+
+La police est SF Pro (police système) sur les appareils Apple, et Inter
+partout ailleurs, chargée par `next/font`. Les animations passent par
+`motion` et respectent le réglage « réduire les animations ».
 
 ## Base de données attendue (Supabase)
 

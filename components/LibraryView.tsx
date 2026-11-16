@@ -4,13 +4,16 @@ import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import EmptyState, { SignInPrompt } from "@/components/EmptyState";
+import { AlertIcon, CheckIcon, ListIcon } from "@/components/Icons";
 import { Poster, mediaHref } from "@/components/PosterCard";
 import ProgressBar from "@/components/ProgressBar";
+import SegmentedControl from "@/components/SegmentedControl";
 import Skeleton from "@/components/Skeleton";
 import { KIND_LABELS, STATUS_LABELS, STATUS_ORDER, type Status } from "@/lib/types";
 import { useLibrary, type LibraryEntry } from "@/lib/useLibrary";
 
-const GRID = "grid gap-4 sm:grid-cols-2 lg:grid-cols-3";
+const GRID = "grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3";
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 export default function LibraryView() {
   const library = useLibrary();
@@ -19,14 +22,10 @@ export default function LibraryView() {
   if (library.phase === "loading") {
     return (
       <>
-        <div className="mb-6 flex gap-2">
-          {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="h-9 w-28 !rounded-full" />
-          ))}
-        </div>
+        <Skeleton className="mb-8 h-10 w-full max-w-[460px] !rounded-full" />
         <div className={GRID}>
           {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className="h-[136px] w-full" />
+            <Skeleton key={i} className="h-[140px] w-full !rounded-[18px]" />
           ))}
         </div>
       </>
@@ -39,7 +38,7 @@ export default function LibraryView() {
 
   if (library.phase === "error") {
     return (
-      <EmptyState kana="エラー" title="Chargement impossible">
+      <EmptyState icon={<AlertIcon size={26} />} title="Chargement impossible">
         Tes listes n&apos;ont pas pu être chargées. Recharge la page dans un
         instant.
       </EmptyState>
@@ -51,8 +50,8 @@ export default function LibraryView() {
   if (entries.length === 0) {
     return (
       <EmptyState
-        kana="はじめ"
-        title="Rien à l'horizon"
+        icon={<ListIcon size={26} />}
+        title="Ta liste est vide"
         action={{ href: "/recherche", label: "Explorer les titres" }}
       >
         Ajoute ton premier film, ta première série ou ton premier anime pour
@@ -74,29 +73,24 @@ export default function LibraryView() {
 
   return (
     <>
-      <div
-        role="tablist"
-        aria-label="Statut"
-        className="scrollbar-hide -mx-4 mb-7 flex gap-2 overflow-x-auto px-4 py-1 sm:mx-0 sm:px-0"
-      >
-        {STATUS_ORDER.map((status) => (
-          <button
-            key={status}
-            role="tab"
-            aria-selected={active === status}
-            onClick={() => setPicked(status)}
-            className="chip shrink-0"
-          >
-            {STATUS_LABELS[status]}
-            <span
-              className={`rounded-full px-1.5 py-px font-mono text-[10px] ${
-                active === status ? "bg-white/20" : "bg-ink/10"
-              }`}
-            >
-              {byStatus.get(status)!.length}
-            </span>
-          </button>
-        ))}
+      <div className="scrollbar-hide -mx-4 mb-8 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <SegmentedControl
+          label="Statut"
+          semantics="tab"
+          value={active}
+          onChange={setPicked}
+          options={STATUS_ORDER.map((status) => ({
+            value: status,
+            label: (
+              <>
+                {STATUS_LABELS[status]}
+                <span className="tabular-nums opacity-50">
+                  {byStatus.get(status)!.length}
+                </span>
+              </>
+            ),
+          }))}
+        />
       </div>
 
       <AnimatePresence mode="wait">
@@ -105,11 +99,11 @@ export default function LibraryView() {
           role="tabpanel"
           initial="hidden"
           animate="show"
-          exit={{ opacity: 0, transition: { duration: 0.15 } }}
-          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
+          exit={{ opacity: 0, transition: { duration: 0.12 } }}
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
         >
           {visible.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted">
+            <p className="py-12 text-center text-[15px] text-muted">
               Aucun titre dans « {STATUS_LABELS[active]} » pour l&apos;instant.
             </p>
           ) : (
@@ -118,12 +112,8 @@ export default function LibraryView() {
                 <motion.div
                   key={`${entry.media_type}-${entry.tmdb_id}`}
                   variants={{
-                    hidden: { opacity: 0, y: 18 },
-                    show: {
-                      opacity: 1,
-                      y: 0,
-                      transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] },
-                    },
+                    hidden: { opacity: 0, y: 20 },
+                    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } },
                   }}
                 >
                   <LibraryCard entry={entry} />
@@ -147,32 +137,38 @@ function LibraryCard({ entry }: { entry: LibraryEntry }) {
   return (
     <Link
       href={mediaHref({ media_type: entry.media_type, id: entry.tmdb_id })}
-      className="panel group flex h-full gap-4 p-3 transition-[transform,box-shadow] duration-300 ease-out-expo hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg"
+      className="card card-interactive group flex h-full gap-4 p-3.5"
     >
       <Poster
         path={summary?.poster_path ?? null}
         alt={title}
         sizes="76px"
-        className="w-[76px] shrink-0 self-start"
+        className="w-[76px] shrink-0 self-start !rounded-[10px] shadow-[0_2px_8px_rgb(0_0_0/0.12)]"
       />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <p className="eyebrow">{summary ? KIND_LABELS[summary.kind] : "—"}</p>
-        <p className="mt-0.5 line-clamp-2 font-bold leading-snug transition-colors group-hover:text-accent">
+      <div className="flex min-w-0 flex-1 flex-col py-0.5">
+        <p className="text-[12px] font-semibold text-muted">
+          {summary ? KIND_LABELS[summary.kind] : "—"}
+        </p>
+        <p className="mt-0.5 line-clamp-2 text-[17px] font-semibold leading-snug tracking-[-0.015em]">
           {title}
         </p>
 
         {entry.media_type === "tv" && summary && total > 0 && (
           <div className="mt-auto pt-3">
             <ProgressBar percent={percent} label={`Progression de ${title}`} />
-            <p className="mt-1.5 flex justify-between font-mono text-[11px] text-muted">
+            <p className="mt-2 flex justify-between text-[12px] tabular-nums text-muted">
               <span>
-                {entry.watched} / {total} ép.
+                {entry.watched} sur {total} ép.
               </span>
-              <span>
-                {remaining <= 0
-                  ? "À jour"
-                  : `${remaining} restant${remaining > 1 ? "s" : ""}`}
-              </span>
+              {remaining <= 0 ? (
+                <span className="flex items-center gap-1 font-medium text-success-text">
+                  <CheckIcon size={11} />À jour
+                </span>
+              ) : (
+                <span>
+                  {remaining} restant{remaining > 1 ? "s" : ""}
+                </span>
+              )}
             </p>
           </div>
         )}

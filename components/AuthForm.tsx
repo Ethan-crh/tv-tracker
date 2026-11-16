@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { useAuth } from "@/components/AuthProvider";
-import { AlertIcon } from "@/components/Icons";
+import { AlertIcon, MailIcon } from "@/components/Icons";
 
 /** Messages d'erreur Supabase (en anglais) → français. */
 function translateError(message: string): string {
@@ -25,17 +26,17 @@ function translateError(message: string): string {
 
 const COPY = {
   login: {
-    eyebrow: "Bon retour",
-    title: "Se connecter",
+    title: "Connexion",
+    subtitle: "Retrouve tes listes et ta progression.",
     submit: "Se connecter",
     submitting: "Connexion…",
     switchText: "Pas encore de compte ?",
-    switchLabel: "S'inscrire",
+    switchLabel: "Créer un compte",
     switchHref: "/signup",
   },
   signup: {
-    eyebrow: "Bienvenue",
     title: "Créer un compte",
+    subtitle: "Gratuit. Il suffit d'un email.",
     submit: "Créer mon compte",
     submitting: "Création…",
     switchText: "Déjà un compte ?",
@@ -85,66 +86,84 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
   }
 
   return (
-    <main className="halftone flex min-h-[calc(100dvh-8rem)] items-center justify-center px-4 py-12">
+    <main className="relative flex min-h-[calc(100dvh-8rem)] items-center justify-center overflow-hidden px-4 py-16">
+      <div
+        aria-hidden="true"
+        className="absolute left-1/2 top-1/3 -z-10 h-[420px] w-[620px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(41_151_255/0.18),transparent)] blur-2xl"
+      />
       <motion.div
-        initial={{ opacity: 0, y: 30, rotate: -3, scale: 0.94 }}
-        animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
-        transition={{ type: "spring", stiffness: 240, damping: 22 }}
-        className="panel panel-lg w-full max-w-sm bg-paper p-6 sm:p-8"
+        initial={{ opacity: 0, y: 24, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className="card w-full max-w-[400px] rounded-[28px] p-8 sm:p-10"
       >
         {confirmationSent ? (
           <div className="text-center">
-            <p aria-hidden="true" className="font-display text-4xl text-accent">
-              メール
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent/10 text-accent">
+              <MailIcon size={26} />
+            </span>
+            <h1 className="section-title mt-5 text-[26px]">Vérifie ta boîte mail</h1>
+            <p className="mt-3 text-[15px] leading-relaxed text-muted">
+              Un email de confirmation a été envoyé à{" "}
+              <span className="font-medium text-ink">{email}</span>. Clique sur le
+              lien qu&apos;il contient pour activer ton compte.
             </p>
-            <h1 className="mt-3 font-display text-2xl">Vérifie ta boîte mail</h1>
-            <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-              Un email de confirmation a été envoyé à <strong>{email}</strong>.
-              Clique sur le lien qu&apos;il contient pour activer ton compte.
-            </p>
-            <Link href="/login" className="btn btn-ink mt-6">
+            <Link href="/login" className="btn btn-primary mt-7">
               Aller à la connexion
             </Link>
           </div>
         ) : (
           <>
-            <p className="eyebrow mb-1">{copy.eyebrow}</p>
-            <h1 className="mb-6 font-display text-3xl">{copy.title}</h1>
+            <div className="text-center">
+              <Image
+                src="/logo.png"
+                alt=""
+                width={56}
+                height={56}
+                className="mx-auto rounded-[14px] shadow-[0_4px_14px_rgb(0_0_0/0.18)]"
+              />
+              <h1 className="section-title mt-5 text-[28px]">{copy.title}</h1>
+              <p className="mt-1.5 text-[15px] text-muted">{copy.subtitle}</p>
+            </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <label className="flex flex-col gap-1.5">
-                <span className="eyebrow">Email</span>
+            <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-3">
+              <div className="float-field">
                 <input
+                  id="auth-email"
                   type="email"
                   autoComplete="email"
+                  placeholder=" "
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="field"
                   required
                 />
-              </label>
-              <label className="flex flex-col gap-1.5">
-                <span className="eyebrow">
-                  Mot de passe{mode === "signup" && " (6 caractères min.)"}
-                </span>
+                <label htmlFor="auth-email">Adresse email</label>
+              </div>
+              <div className="float-field">
                 <input
+                  id="auth-password"
                   type="password"
                   autoComplete={mode === "login" ? "current-password" : "new-password"}
+                  placeholder=" "
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="field"
                   required
                   minLength={6}
                 />
-              </label>
+                <label htmlFor="auth-password">
+                  Mot de passe{mode === "signup" && " (6 caractères min.)"}
+                </label>
+              </div>
 
               {error && (
                 <motion.p
                   role="alert"
-                  initial={{ opacity: 0, x: -8 }}
+                  initial={{ opacity: 0, x: 0 }}
                   animate={{ opacity: 1, x: [0, -6, 6, -4, 4, 0] }}
                   transition={{ duration: 0.4 }}
-                  className="flex items-start gap-2 rounded-[4px] border-2 border-accent bg-accent/10 px-3 py-2 text-sm text-accent-deep"
+                  className="flex items-start gap-2 px-1 text-[14px] text-danger"
                 >
                   <AlertIcon size={16} className="mt-0.5 shrink-0" />
                   {error}
@@ -154,15 +173,15 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
               <button
                 type="submit"
                 disabled={submitting}
-                className="btn btn-lg btn-primary mt-1"
+                className="btn btn-primary btn-lg mt-3 w-full"
               >
                 {submitting ? copy.submitting : copy.submit}
               </button>
             </form>
 
-            <p className="mt-6 text-sm text-ink-soft">
+            <p className="mt-7 text-center text-[14px] text-muted">
               {copy.switchText}{" "}
-              <Link href={copy.switchHref} className="link font-bold text-ink">
+              <Link href={copy.switchHref} className="link font-medium">
                 {copy.switchLabel}
               </Link>
             </p>

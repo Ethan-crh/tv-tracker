@@ -14,12 +14,15 @@ export default function Modal({
   label,
   children,
   className = "",
+  dark = false,
 }: {
   open: boolean;
   onClose: () => void;
   label: string;
   children: ReactNode;
   className?: string;
+  /** Fond noir, pour la vidéo. */
+  dark?: boolean;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -50,11 +53,11 @@ export default function Modal({
       {open && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <motion.div
-            className="absolute inset-0 bg-ink/70 backdrop-blur-[2px]"
+            className={`absolute inset-0 backdrop-blur-md ${dark ? "bg-black/80" : "bg-black/35"}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.25 }}
             onClick={onClose}
           />
           <motion.div
@@ -63,11 +66,13 @@ export default function Modal({
             aria-modal="true"
             aria-label={label}
             tabIndex={-1}
-            initial={{ opacity: 0, scale: 0.88, y: 24, rotate: -2 }}
-            animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 12 }}
-            transition={{ type: "spring", stiffness: 380, damping: 28 }}
-            className={`panel panel-lg relative w-full bg-paper outline-none ${className}`}
+            initial={{ opacity: 0, scale: 0.94, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: 6, transition: { duration: 0.15 } }}
+            transition={{ type: "spring", stiffness: 420, damping: 34 }}
+            className={`relative w-full rounded-[22px] shadow-float outline-none ${
+              dark ? "bg-night" : "bg-card"
+            } ${className}`}
           >
             {children}
           </motion.div>
