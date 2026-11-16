@@ -144,6 +144,22 @@ function pickTrailer(videos: RawVideos | undefined): Video | null {
     : null;
 }
 
+/** Garde la première occurrence de chaque titre (même type, même id). */
+function uniqueItems(items: RawListItem[]): RawListItem[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const key = `${item.media_type ?? ""}-${item.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/**
+ * Plusieurs pages d'une liste TMDB, sans doublons : le classement bouge
+ * entre deux pages (et chaque page est mise en cache séparément), donc un
+ * même titre peut apparaître en bas de la page 1 et en haut de la page 2.
+ */
 async function fetchPages(
   path: string,
   params: Params,
@@ -155,7 +171,7 @@ async function fetchPages(
       tmdb<RawPage>(path, { ...params, page: i + 1 }, revalidate),
     ),
   );
-  return responses.flatMap((r) => r.results || []);
+  return uniqueItems(responses.flatMap((r) => r.results || []));
 }
 
 // ---------------------------------------------------------------------------
@@ -224,12 +240,20 @@ export async function getBackdrops(): Promise<Backdrop[]> {
     }),
   );
 
-  // On alterne film / série / anime pour varier le carrousel.
+  // On alterne film / série / anime pour varier le carrousel, sans jamais
+  // montrer deux fois le même titre ni la même image.
   const mixed: Backdrop[] = [];
+  const seen = new Set<string>();
   const longest = Math.max(...lists.map((l) => l.length));
   for (let i = 0; i < longest; i++) {
     for (const list of lists) {
-      if (list[i]) mixed.push(list[i]);
+      const item = list[i];
+      if (!item) continue;
+      const titleKey = `${item.media_type}-${item.id}`;
+      if (seen.has(titleKey) || seen.has(item.backdrop_path)) continue;
+      seen.add(titleKey);
+      seen.add(item.backdrop_path);
+      mixed.push(item);
     }
   }
   return mixed;
@@ -268,7 +292,7 @@ export async function searchTitles(query: string): Promise<MediaCard[]> {
     { query, include_adult: "false" },
     600,
   );
-  return (data.results || [])
+  return uniqueItems(data.results || [])
     .filter(
       (item): item is RawListItem & { media_type: MediaType } =>
         (item.media_type === "movie" || item.media_type === "tv") &&
@@ -452,8 +476,8 @@ export async function getMovie(id: number): Promise<MovieDetails> {
       character: c.character,
       profile_path: c.profile_path,
     })),
-    similar: (raw.similar?.results || [])
-      .filter((item) => item.poster_path)
+    similar: uniqueItems(raw.similar?.results || [])
+      .filter((item) => item.poster_path && item.id !== raw.id)
       .slice(0, 16)
       .map((item) => toCard(item, "movie")),
   };
@@ -495,8 +519,8 @@ export async function getShow(id: number): Promise<ShowDetails> {
       character: c.roles?.[0]?.character || "",
       profile_path: c.profile_path,
     })),
-    similar: (raw.similar?.results || [])
-      .filter((item) => item.poster_path && isAllowed(item, "tv"))
+    similar: uniqueItems(raw.similar?.results || [])
+      .filter((item) => item.poster_path && item.id !== raw.id && isAllowed(item, "tv"))
       .slice(0, 16)
       .map((item) => toCard(item, "tv")),
   };

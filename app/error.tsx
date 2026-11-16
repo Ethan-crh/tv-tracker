@@ -5,10 +5,10 @@ import { AlertIcon } from "@/components/Icons";
 
 export default function Error({
   error,
-  unstable_retry,
+  retry,
 }: {
-  error: Error & { digest?: string };
-  unstable_retry: () => void;
+  error: unknown;
+  retry: () => void;
 }) {
   useEffect(() => {
     console.error(error);
@@ -25,7 +25,7 @@ export default function Error({
           Les données n&apos;ont pas pu être chargées. C&apos;est sans doute
           passager.
         </p>
-        <button onClick={() => unstable_retry()} className="btn btn-primary mt-6">
+        <button onClick={() => retry()} className="btn btn-primary mt-6">
           Réessayer
         </button>
       </div>

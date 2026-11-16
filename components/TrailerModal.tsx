@@ -31,7 +31,6 @@ export default function TrailerModal({ trailer }: { trailer: Video | null }) {
             src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(trailer.key)}?autoplay=1`}
             title="Bande-annonce"
             allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-            allowFullScreen
             className="h-full w-full"
           />
         </div>

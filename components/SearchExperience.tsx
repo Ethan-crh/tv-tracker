@@ -356,7 +356,7 @@ function SearchBar({
                   <span className="relative h-14 w-[38px] shrink-0 overflow-hidden rounded-md bg-fill">
                     {item.poster_path && (
                       <Image
-                        src={tmdbImage(item.poster_path, "w92")}
+                        src={tmdbImage(item.poster_path, "poster")}
                         alt=""
                         fill
                         sizes="38px"

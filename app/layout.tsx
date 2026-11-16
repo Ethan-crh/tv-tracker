@@ -20,8 +20,8 @@ export const metadata: Metadata = {
   description: "Suis ta progression dans tes films, séries et animes.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
+    icon: "/logo-64.png",
+    apple: "/apple-touch-icon.png",
   },
   appleWebApp: {
     capable: true,
@@ -43,7 +43,9 @@ export default function RootLayout({
   return (
     // suppressHydrationWarning : certaines extensions de navigateur ajoutent
     // des attributs à <html> avant l'hydratation. Ne concerne que cette balise.
-    <html lang="fr" suppressHydrationWarning>
+    // data-scroll-behavior : le défilement fluide (globals.css) est coupé le
+    // temps d'un changement de page, pour arriver instantanément en haut.
+    <html lang="fr" suppressHydrationWarning data-scroll-behavior="smooth">
       <body className={`${inter.variable} flex min-h-dvh flex-col antialiased`}>
         <Providers>
           <Navbar />

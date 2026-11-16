@@ -13,7 +13,7 @@ export default function CastRow({ cast }: { cast: CastMember[] }) {
           <div className="relative mx-auto h-[88px] w-[88px] overflow-hidden rounded-full bg-fill shadow-[0_2px_8px_rgb(0_0_0/0.1)]">
             {member.profile_path ? (
               <Image
-                src={tmdbImage(member.profile_path, "w185")}
+                src={tmdbImage(member.profile_path, "profile")}
                 alt=""
                 fill
                 sizes="88px"

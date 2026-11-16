@@ -36,7 +36,7 @@ export default function MediaHero({
         // Conteneur dédié : il rogne l'image agrandie par le zoom lent.
         <div className="absolute inset-0 -z-20 overflow-hidden">
           <Image
-            src={tmdbImage(backdropPath, "w1280")}
+            src={tmdbImage(backdropPath, "backdrop")}
             alt=""
             fill
             sizes="100vw"
@@ -48,15 +48,15 @@ export default function MediaHero({
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/75 to-black/10" />
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/85 via-black/35 to-transparent" />
 
-      <div className="mx-auto flex min-h-[min(82svh,780px)] max-w-6xl items-end gap-10 px-5 pb-10 pt-40 sm:px-6 sm:pb-14 sm:pt-48">
-        <Reveal className="hidden w-52 shrink-0 md:block lg:w-60">
-          <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-white/10 shadow-[0_24px_60px_rgb(0_0_0/0.55)] ring-1 ring-white/10">
+      <div className="mx-auto flex min-h-[min(82svh,780px)] max-w-6xl flex-col justify-end gap-6 px-5 pb-10 pt-28 sm:px-6 sm:pb-14 sm:pt-40 md:flex-row md:items-end md:gap-10 md:pt-48">
+        <Reveal className="w-28 shrink-0 sm:w-36 md:w-52 lg:w-60">
+          <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-white/10 shadow-[0_24px_60px_rgb(0_0_0/0.55)] ring-1 ring-white/10 md:rounded-2xl">
             {posterPath && (
               <Image
-                src={tmdbImage(posterPath, "w500")}
+                src={tmdbImage(posterPath, "poster")}
                 alt={`Affiche de ${title}`}
                 fill
-                sizes="240px"
+                sizes="(min-width: 1024px) 240px, (min-width: 768px) 208px, 144px"
                 preload
                 className="object-cover"
               />

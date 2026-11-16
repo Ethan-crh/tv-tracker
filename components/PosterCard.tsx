@@ -14,24 +14,25 @@ export function Poster({
   path,
   alt,
   sizes,
-  preload = false,
+  eager = false,
   className = "",
 }: {
   path: string | null;
   alt: string;
   sizes: string;
-  preload?: boolean;
+  /** À activer pour les affiches visibles dès l'arrivée sur la page. */
+  eager?: boolean;
   className?: string;
 }) {
   return (
     <div className={`relative aspect-[2/3] overflow-hidden rounded-xl bg-fill ${className}`}>
       {path ? (
         <Image
-          src={tmdbImage(path, "w342")}
+          src={tmdbImage(path, "poster")}
           alt={alt}
           fill
           sizes={sizes}
-          preload={preload}
+          loading={eager ? "eager" : undefined}
           className="object-cover"
         />
       ) : (
@@ -48,11 +49,13 @@ export default function PosterCard({
   rank,
   subtitle,
   sizes = "(min-width: 1024px) 200px, (min-width: 640px) 25vw, 45vw",
+  eager = false,
 }: {
   item: MediaCard;
   rank?: number;
   subtitle?: string;
   sizes?: string;
+  eager?: boolean;
 }) {
   const meta =
     subtitle ??
@@ -61,7 +64,7 @@ export default function PosterCard({
   return (
     <Link href={mediaHref(item)} className="group block rounded-xl">
       <div className="relative rounded-xl shadow-poster transition-[transform,box-shadow] duration-500 ease-apple group-hover:-translate-y-1 group-hover:scale-[1.03] group-hover:shadow-lift group-active:scale-[0.99]">
-        <Poster path={item.poster_path} alt={item.title} sizes={sizes} />
+        <Poster path={item.poster_path} alt={item.title} sizes={sizes} eager={eager} />
         {item.vote_average > 0 && (
           <span className="glass-dark absolute right-2 top-2 flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold text-white">
             <StarIcon size={10} className="text-star" />

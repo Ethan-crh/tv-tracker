@@ -53,7 +53,13 @@ export function useConfirm() {
           <p className="mt-2 text-[15px] leading-relaxed text-muted">
             {options.message}
           </p>
-          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          {/* Avec trois choix, les boutons s'empilent (comme une alerte iOS) :
+              côte à côte, ils débordent de la fenêtre. */}
+          <div
+            className={`mt-6 flex flex-col-reverse gap-2 ${
+              options.alternativeLabel ? "" : "sm:flex-row sm:justify-end"
+            }`}
+          >
             <button onClick={cancel} className="btn">
               {options.cancelLabel || "Annuler"}
             </button>

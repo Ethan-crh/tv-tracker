@@ -2,13 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "image.tmdb.org",
-        pathname: "/t/p/**",
-      },
-    ],
+    // Les images viennent directement du CDN de TMDB, à la bonne taille :
+    // l'optimiseur intégré de Next (/_next/image) n'est pas utilisé.
+    loader: "custom",
+    loaderFile: "./lib/tmdb-image-loader.ts",
   },
   allowedDevOrigins: ["192.168.0.53"],
 };

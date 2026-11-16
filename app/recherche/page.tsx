@@ -31,7 +31,7 @@ export default async function RecherchePage() {
       <Suspense fallback={<PosterGridSkeleton />}>
         <SearchExperience>
           <div className="flex flex-col gap-10">
-            <PosterRail eyebrow="En ce moment" title="Top films" items={films} ranked />
+            <PosterRail eyebrow="En ce moment" title="Top films" items={films} ranked eager />
             <PosterRail eyebrow="En ce moment" title="Top animes" items={animes} ranked />
             <PosterRail eyebrow="En ce moment" title="Top séries" items={series} ranked />
           </div>

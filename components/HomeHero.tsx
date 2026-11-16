@@ -73,7 +73,7 @@ export default function HomeHero({ backdrops }: { backdrops: Backdrop[] }) {
         <AnimatePresence>
           {current && (
             <motion.div
-              key={current.backdrop_path}
+              key={`${current.media_type}-${current.id}`}
               className="absolute inset-0"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -81,7 +81,7 @@ export default function HomeHero({ backdrops }: { backdrops: Backdrop[] }) {
               transition={{ duration: 1.4, ease: "easeInOut" }}
             >
               <Image
-                src={tmdbImage(current.backdrop_path, "w1280")}
+                src={tmdbImage(current.backdrop_path, "backdrop")}
                 alt=""
                 fill
                 sizes="100vw"
@@ -166,7 +166,7 @@ export default function HomeHero({ backdrops }: { backdrops: Backdrop[] }) {
           <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-5 pb-7 sm:flex-row sm:justify-between sm:px-6 sm:pb-8">
             <AnimatePresence mode="wait">
               <motion.div
-                key={current.backdrop_path}
+                key={`${current.media_type}-${current.id}`}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
@@ -192,7 +192,7 @@ export default function HomeHero({ backdrops }: { backdrops: Backdrop[] }) {
               <div className="flex items-center gap-1.5" aria-label="Images de fond">
                 {backdrops.slice(0, 12).map((b, i) => (
                   <button
-                    key={b.backdrop_path}
+                    key={`${b.media_type}-${b.id}`}
                     onClick={() => setIndex(i)}
                     aria-label={`Afficher ${b.title}`}
                     aria-current={i === index ? "true" : undefined}

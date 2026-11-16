@@ -116,11 +116,12 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
           <>
             <div className="text-center">
               <Image
-                src="/logo.png"
+                src="/logo-128.png"
                 alt=""
                 width={56}
                 height={56}
-                className="mx-auto rounded-[14px] shadow-[0_4px_14px_rgb(0_0_0/0.18)]"
+                unoptimized
+                className="mx-auto h-14 w-14 rounded-[14px] shadow-[0_4px_14px_rgb(0_0_0/0.18)]"
               />
               <h1 className="section-title mt-5 text-[28px]">{copy.title}</h1>
               <p className="mt-1.5 text-[15px] text-muted">{copy.subtitle}</p>

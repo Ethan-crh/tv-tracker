@@ -774,7 +774,7 @@ function EpisodeRow({
       {episode.still_path && (
         <div className="relative hidden aspect-video w-40 shrink-0 overflow-hidden rounded-[10px] bg-fill sm:block">
           <Image
-            src={tmdbImage(episode.still_path, "w300")}
+            src={tmdbImage(episode.still_path, "still")}
             alt=""
             fill
             sizes="160px"

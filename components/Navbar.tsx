@@ -35,11 +35,12 @@ export default function Navbar() {
         <div className="mx-auto flex h-12 max-w-6xl items-center justify-between gap-4 px-4 sm:h-[52px] sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
             <Image
-              src="/logo.png"
+              src="/logo-64.png"
               alt=""
               width={28}
               height={28}
-              className="rounded-[7px] shadow-[0_1px_3px_rgb(0_0_0/0.2)]"
+              unoptimized
+              className="h-7 w-7 rounded-[7px] shadow-[0_1px_3px_rgb(0_0_0/0.2)]"
             />
             <span className="text-[17px] font-semibold tracking-[-0.02em]">
               My TV-Board

@@ -7,11 +7,14 @@ export default function PosterRail({
   eyebrow,
   items,
   ranked = false,
+  eager = false,
 }: {
   title: string;
   eyebrow?: string;
   items: MediaCard[];
   ranked?: boolean;
+  /** Rail visible dès l'arrivée : ses premières affiches chargent tout de suite. */
+  eager?: boolean;
 }) {
   if (items.length === 0) return null;
 
@@ -26,6 +29,7 @@ export default function PosterRail({
             item={item}
             rank={ranked ? i + 1 : undefined}
             sizes="160px"
+            eager={eager && i < 8}
           />
         </div>
       ))}

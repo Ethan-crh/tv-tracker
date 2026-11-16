@@ -34,6 +34,22 @@ La police est SF Pro (police système) sur les appareils Apple, et Inter
 partout ailleurs, chargée par `next/font`. Les animations passent par
 `motion` et respectent le réglage « réduire les animations ».
 
+## Images
+
+Les affiches et images de fond ne passent pas par l'optimiseur de Next
+(`/_next/image`) : `lib/tmdb-image-loader.ts` demande directement au CDN de
+TMDB la taille la plus proche de celle affichée. Aucune charge serveur, aucun
+quota d'optimisation consommé chez l'hébergeur. Les logos locaux existent en
+versions réduites (`public/logo-64.png`, `logo-128.png`,
+`apple-touch-icon.png`).
+
+## Dépendances
+
+`package.json` force `minimatch` ^11.0.1 pour `@typescript-eslint/typescript-estree`
+(faille GHSA-g3hv-75wg-m249, corrigée seulement en 11.0.1 alors que
+`typescript-eslint` 8.72.2 demande encore la version 10). Cela ne concerne que
+le linter ; à retirer dès qu'une version de `typescript-eslint` l'intègre.
+
 ## Base de données attendue (Supabase)
 
 - `user_shows (user_id, tmdb_id, media_type, status)` — unique sur
