@@ -56,7 +56,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
+    // suppressHydrationWarning : certaines extensions de navigateur ajoutent
+    // des attributs à <html> avant l'hydratation. Ne concerne que cette balise.
+    <html lang="fr" suppressHydrationWarning>
       <body
         className={`${display.variable} ${body.variable} ${mono.variable} flex min-h-dvh flex-col antialiased`}
       >
