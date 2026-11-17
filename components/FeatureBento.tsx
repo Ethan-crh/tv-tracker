@@ -4,6 +4,7 @@ import { useId, type ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import CountUp from "@/components/CountUp";
+import { useAppear } from "@/lib/useAppear";
 import { CheckIcon, ChevronRightIcon } from "@/components/Icons";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -129,8 +130,9 @@ const MOCK_EPISODES = [
 ];
 
 function EpisodesMock() {
+  const [ref, visible] = useAppear();
   return (
-    <div className="mt-auto rounded-2xl bg-paper p-2 pt-2 sm:p-3" aria-hidden="true">
+    <div ref={ref} className="mt-auto rounded-2xl bg-paper p-2 pt-2 sm:p-3" aria-hidden="true">
       <div className="mb-2 flex items-center justify-between px-2 pt-1 text-[13px]">
         <span className="font-semibold">Saison 1</span>
         <span className="text-muted">3 sur 4 vus</span>
@@ -146,8 +148,7 @@ function EpisodesMock() {
                 <motion.span
                   className="absolute inset-[-1.5px] flex items-center justify-center rounded-full bg-accent text-white"
                   initial={{ scale: 0 }}
-                  whileInView={{ scale: 1 }}
-                  viewport={VIEW}
+                  animate={visible ? { scale: 1 } : { scale: 0 }}
                   transition={{
                     delay: 0.5 + i * 0.35,
                     type: "spring",
@@ -169,8 +170,7 @@ function EpisodesMock() {
         <motion.div
           className="h-full rounded-full bg-accent"
           initial={{ width: "0%" }}
-          whileInView={{ width: "75%" }}
-          viewport={VIEW}
+          animate={{ width: visible ? "75%" : "0%" }}
           transition={{ delay: 0.5, duration: 1.4, ease: EASE }}
         />
       </div>
@@ -179,12 +179,12 @@ function EpisodesMock() {
 }
 
 function CalendarMock() {
+  const [ref, visible] = useAppear();
   return (
-    <div className="mt-auto flex items-center gap-4 pt-8" aria-hidden="true">
+    <div ref={ref} className="mt-auto flex items-center gap-4 pt-8" aria-hidden="true">
       <motion.div
         initial={{ rotate: -12, scale: 0.8, opacity: 0 }}
-        whileInView={{ rotate: -4, scale: 1, opacity: 1 }}
-        viewport={VIEW}
+        animate={visible ? { rotate: -4, scale: 1, opacity: 1 } : undefined}
         transition={{ type: "spring", stiffness: 220, damping: 16, delay: 0.3 }}
         className="flex h-[88px] w-[88px] shrink-0 flex-col items-center rounded-[22px] bg-white pt-2.5 text-ink shadow-[0_10px_30px_rgb(0_0_0/0.4)]"
       >
@@ -193,8 +193,7 @@ function CalendarMock() {
       </motion.div>
       <motion.div
         initial={{ x: 24, opacity: 0 }}
-        whileInView={{ x: 0, opacity: 1 }}
-        viewport={VIEW}
+        animate={visible ? { x: 0, opacity: 1 } : undefined}
         transition={{ duration: 0.7, ease: EASE, delay: 0.6 }}
         className="min-w-0 rounded-2xl bg-white/10 px-4 py-3 backdrop-blur"
       >
@@ -210,9 +209,14 @@ function RingMock() {
   const gradientId = useId();
   const radius = 44;
   const circumference = 2 * Math.PI * radius;
+  const [ref, visible] = useAppear();
 
   return (
-    <div className="mt-auto flex shrink-0 items-center gap-6 pt-8 lg:mt-0 lg:pt-0" aria-hidden="true">
+    <div
+      ref={ref}
+      className="mt-auto flex shrink-0 items-center gap-6 pt-8 lg:mt-0 lg:pt-0"
+      aria-hidden="true"
+    >
       <svg viewBox="0 0 110 110" className="h-[104px] w-[104px] shrink-0 -rotate-90 lg:h-[132px] lg:w-[132px]">
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
@@ -231,8 +235,7 @@ function RingMock() {
           strokeLinecap="round"
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
-          whileInView={{ strokeDashoffset: circumference * 0.28 }}
-          viewport={VIEW}
+          animate={{ strokeDashoffset: visible ? circumference * 0.28 : circumference }}
           transition={{ duration: 1.6, ease: EASE, delay: 0.3 }}
         />
       </svg>

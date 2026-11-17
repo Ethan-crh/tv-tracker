@@ -20,6 +20,7 @@ export default function SegmentedControl<T extends string>({
   tone = "light",
   semantics = "radio",
   disabled = false,
+  fill = false,
   className = "",
 }: {
   options: SegmentOption<T>[];
@@ -29,6 +30,8 @@ export default function SegmentedControl<T extends string>({
   tone?: "light" | "dark";
   semantics?: "radio" | "tab";
   disabled?: boolean;
+  /** Sur mobile, occupe toute la largeur avec des segments égaux. */
+  fill?: boolean;
   className?: string;
 }) {
   const layoutId = useId();
@@ -38,7 +41,7 @@ export default function SegmentedControl<T extends string>({
     <div
       role={semantics === "tab" ? "tablist" : "radiogroup"}
       aria-label={label}
-      className={`inline-flex rounded-full p-[3px] ${
+      className={`${fill ? "flex w-full sm:inline-flex sm:w-auto" : "inline-flex"} rounded-full p-[3px] ${
         dark ? "bg-white/[0.14] backdrop-blur-xl" : "bg-black/[0.06]"
       } ${disabled ? "opacity-50" : ""} ${className}`}
     >
@@ -53,7 +56,9 @@ export default function SegmentedControl<T extends string>({
             aria-selected={semantics === "tab" ? active : undefined}
             disabled={disabled}
             onClick={() => onChange(option.value)}
-            className={`relative z-0 flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors duration-200 disabled:cursor-not-allowed ${
+            className={`relative z-0 flex min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-full py-1.5 text-[13px] font-medium ${
+              fill ? "px-1.5 sm:px-3.5" : "px-3.5"
+            } transition-colors duration-200 disabled:cursor-not-allowed ${
               active
                 ? "text-ink"
                 : dark

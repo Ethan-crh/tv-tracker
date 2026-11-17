@@ -73,21 +73,24 @@ export default function LibraryView() {
 
   return (
     <>
-      <div className="scrollbar-hide -mx-4 mb-8 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+      <div className="mb-8">
         <SegmentedControl
           label="Statut"
           semantics="tab"
+          fill
           value={active}
           onChange={setPicked}
           options={STATUS_ORDER.map((status) => ({
             value: status,
+            // Sur mobile, le nombre passe sous le libellé pour que les
+            // quatre statuts tiennent dans la largeur de l'écran.
             label: (
-              <>
+              <span className="flex flex-col items-center leading-tight sm:flex-row sm:gap-1.5">
                 {STATUS_LABELS[status]}
-                <span className="tabular-nums opacity-50">
+                <span className="text-[12px] tabular-nums opacity-50 sm:text-[13px]">
                   {byStatus.get(status)!.length}
                 </span>
-              </>
+              </span>
             ),
           }))}
         />

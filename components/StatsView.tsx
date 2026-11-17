@@ -15,6 +15,7 @@ import {
 import { Reveal, Stagger, StaggerItem } from "@/components/Reveal";
 import Skeleton from "@/components/Skeleton";
 import { STATUS_LABELS, STATUS_ORDER, type Status } from "@/lib/types";
+import { useAppear } from "@/lib/useAppear";
 import { useLibrary } from "@/lib/useLibrary";
 
 /** Couleurs système, dans l'ordre de STATUS_ORDER. */
@@ -164,27 +165,7 @@ export default function StatsView() {
             {topGenres.length === 0 ? (
               <p className="text-[15px] text-muted">Pas encore assez de titres.</p>
             ) : (
-              <ol className="flex flex-col gap-4">
-                {topGenres.map(([name, count], i) => (
-                  <li key={name}>
-                    <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[15px]">
-                      <span className="font-medium">{name}</span>
-                      <span className="text-[13px] tabular-nums text-muted">
-                        {count} titre{count > 1 ? "s" : ""}
-                      </span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-black/[0.06]">
-                      <motion.div
-                        className={`h-full rounded-full ${i === 0 ? "bg-accent" : "bg-accent/45"}`}
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${(count / maxGenre) * 100}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1, delay: 0.2 + i * 0.08, ease: EASE }}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ol>
+              <GenreBars genres={topGenres} max={maxGenre} />
             )}
           </section>
         </Reveal>
@@ -233,8 +214,10 @@ function StatusDonut({ tally, total }: { tally: Map<Status, number>; total: numb
     offset += length;
   }
 
+  const [ref, visible] = useAppear();
+
   return (
-    <div className="relative h-[164px] w-[164px] shrink-0">
+    <div ref={ref} className="relative h-[164px] w-[164px] shrink-0">
       <svg viewBox="0 0 164 164" className="h-full w-full -rotate-90" aria-hidden="true">
         <circle cx="82" cy="82" r={radius} fill="none" stroke="#0000000a" strokeWidth={stroke} />
         {segments.map((seg, i) => (
@@ -248,9 +231,10 @@ function StatusDonut({ tally, total }: { tally: Map<Status, number>; total: numb
             strokeWidth={stroke}
             strokeDashoffset={-seg.start}
             initial={{ strokeDasharray: `0 ${circumference}` }}
-            viewport={{ once: true }}
-            whileInView={{
-              strokeDasharray: `${seg.length} ${circumference - seg.length}`,
+            animate={{
+              strokeDasharray: visible
+                ? `${seg.length} ${circumference - seg.length}`
+                : `0 ${circumference}`,
             }}
             transition={{ duration: 1.1, delay: 0.25 + i * 0.12, ease: EASE }}
           />
@@ -263,5 +247,31 @@ function StatusDonut({ tally, total }: { tally: Map<Status, number>; total: numb
         <span className="mt-1 text-[13px] text-muted">titre{total > 1 ? "s" : ""}</span>
       </div>
     </div>
+  );
+}
+
+function GenreBars({ genres, max }: { genres: [string, number][]; max: number }) {
+  const [ref, visible] = useAppear<HTMLOListElement>();
+  return (
+    <ol ref={ref} className="flex flex-col gap-4">
+      {genres.map(([name, count], i) => (
+        <li key={name}>
+          <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[15px]">
+            <span className="font-medium">{name}</span>
+            <span className="text-[13px] tabular-nums text-muted">
+              {count} titre{count > 1 ? "s" : ""}
+            </span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-black/[0.06]">
+            <motion.div
+              className={`h-full rounded-full ${i === 0 ? "bg-accent" : "bg-accent/45"}`}
+              initial={{ width: 0 }}
+              animate={{ width: visible ? `${(count / max) * 100}%` : 0 }}
+              transition={{ duration: 1, delay: 0.15 + i * 0.08, ease: EASE }}
+            />
+          </div>
+        </li>
+      ))}
+    </ol>
   );
 }
