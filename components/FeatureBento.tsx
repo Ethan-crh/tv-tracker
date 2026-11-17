@@ -12,7 +12,7 @@ const VIEW = { once: true, margin: "-80px" } as const;
 /** Grille de présentation façon « bento » avec des maquettes animées. */
 export default function FeatureBento() {
   return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
       <Tile href="/mes-listes" className="sm:col-span-2">
         <TileText
           eyebrow="Suivi"

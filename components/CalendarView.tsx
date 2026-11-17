@@ -92,7 +92,7 @@ export default function CalendarView({ movies }: { movies: UpcomingMovie[] }) {
     }));
 
   return (
-    <div className="grid gap-14 lg:grid-cols-2 lg:gap-10">
+    <div className="grid grid-cols-1 gap-14 lg:grid-cols-2 lg:gap-10">
       <CalendarColumn title="Mes séries en cours" eyebrow="Prochains épisodes">
         {authLoading || (userId && shows.phase === "loading") ? (
           <TimelineSkeleton />

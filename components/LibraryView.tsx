@@ -12,7 +12,7 @@ import Skeleton from "@/components/Skeleton";
 import { KIND_LABELS, STATUS_LABELS, STATUS_ORDER, type Status } from "@/lib/types";
 import { useLibrary, type LibraryEntry } from "@/lib/useLibrary";
 
-const GRID = "grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3";
+const GRID = "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3";
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 export default function LibraryView() {

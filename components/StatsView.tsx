@@ -157,7 +157,7 @@ export default function StatsView() {
         </div>
       </Reveal>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Reveal>
           <section className="card h-full rounded-[28px] p-6 sm:p-8">
             <h2 className="section-title mb-6 text-[22px]">Genres préférés</h2>
@@ -194,7 +194,7 @@ export default function StatsView() {
             <h2 className="section-title mb-6 text-[22px]">Répartition</h2>
             <div className="flex flex-col items-center gap-8 sm:flex-row">
               <StatusDonut tally={statusTally} total={entries.length} />
-              <ul className="grid w-full flex-1 gap-3">
+              <ul className="grid w-full flex-1 grid-cols-1 gap-3">
                 {STATUS_ORDER.map((status) => (
                   <li key={status} className="flex items-center gap-3 text-[15px]">
                     <span

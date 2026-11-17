@@ -31,7 +31,9 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="glass sticky top-0 z-50 border-b border-hairline">
+      {/* pt-safe : dans l'appli installée sur le téléphone, la page s'affiche
+          sous l'heure et la batterie ; la barre descend d'autant. */}
+      <header className="glass pt-safe sticky top-0 z-50 border-b border-hairline">
         <div className="mx-auto flex h-12 max-w-6xl items-center justify-between gap-4 px-4 sm:h-[52px] sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
             <Image
